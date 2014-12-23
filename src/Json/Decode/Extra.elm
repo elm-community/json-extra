@@ -25,9 +25,6 @@ import Time
       , username          : Maybe String
       , email             : Maybe String
       , fullname          : Maybe String
-      , fullnamePrivate   : Bool
-      , stripeId          : Maybe String
-      , edaTools          : Maybe String
       , avatar            : Maybe String
       , isModerator       : Bool
       , isOrganization    : Bool
@@ -46,9 +43,6 @@ import Time
       `andApply` ("username"          := maybe string)
       `andApply` ("email"             := maybe string)
       `andApply` ("fullname"          := maybe string)
-      `andApply` ("fullnamePrivate"   := bool)
-      `andApply` ("stripeId"          := maybe string)
-      `andApply` ("edaTools"          := maybe string)
       `andApply` ("avatar"            := maybe string)
       `andApply` ("isModerator"       := bool)
       `andApply` ("isOrganization"    := bool)
