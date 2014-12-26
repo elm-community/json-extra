@@ -1,5 +1,5 @@
 {
-    "version": "1.0.1",
+    "version": "1.0.3",
     "summary": "Convenience functions for working with Json",
     "repository": "https://github.com/circuithub/elm-json-extra.git",
     "license": "MIT",
