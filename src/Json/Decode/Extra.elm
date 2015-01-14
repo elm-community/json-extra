@@ -5,7 +5,7 @@ module Json.Decode.Extra where
 @docs date
 
 # Incremental Decoding
-@docs andApply
+@docs apply
 
 -}
 
@@ -34,19 +34,19 @@ import Time
     metaDecoder : (Int -> Date -> Date -> Maybe Date -> b) -> Decoder b
     metaDecoder f = f
       `map`      ("id"        := int)
-      `andApply` ("createdAt" := date)
-      `andApply` ("updatedAt" := date)
-      `andApply` ("deletedAt" := maybe date)
+      `apply` ("createdAt" := date)
+      `apply` ("updatedAt" := date)
+      `apply` ("deletedAt" := maybe date)
 
     userDecoder : Decoder User
     userDecoder = metaDecoder User
-      `andApply` ("username"          := maybe string)
-      `andApply` ("email"             := maybe string)
-      `andApply` ("fullname"          := maybe string)
-      `andApply` ("avatar"            := maybe string)
-      `andApply` ("isModerator"       := bool)
-      `andApply` ("isOrganization"    := bool)
-      `andApply` ("isAdmin"           := bool)
+      `apply` ("username"          := maybe string)
+      `apply` ("email"             := maybe string)
+      `apply` ("fullname"          := maybe string)
+      `apply` ("avatar"            := maybe string)
+      `apply` ("isModerator"       := bool)
+      `apply` ("isOrganization"    := bool)
+      `apply` ("isAdmin"           := bool)
 
 This is a shortened form of
 
@@ -68,8 +68,8 @@ This is a shortened form of
       `andThen` \f -> f `map` ("isAdmin"           := bool)
 
 -}
-andApply : Decoder (a -> b) -> Decoder a -> Decoder b
-andApply f aDecoder =
+apply : Decoder (a -> b) -> Decoder a -> Decoder b
+apply f aDecoder =
   f `andThen` (\f' -> f' `map` aDecoder)
 
 {-| Extract a date.
