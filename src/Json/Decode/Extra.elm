@@ -75,7 +75,7 @@ apply f aDecoder =
 {-| Extract a date.
 
 Note that this function is not total, it will throw an exception given an incorrectly formatted date.
-See 'Date.fromString' and 'Json.customDecoder'.
+See `Date.fromString` and `Json.customDecoder`.
 
 -}
 date : Decoder Date.Date
@@ -84,7 +84,7 @@ date = customDecoder string Date.fromString
 -- {-| Extract a time value.
 -- 
 -- Note that this function is not total, it will throw an exception given an incorrectly formatted time value.
--- See 'Time.fromString' and 'Json.customDecoder'.
+-- See `Time.fromString` and `Json.customDecoder`.
 -- 
 -- -}
 -- time : Decoder Time.Time
