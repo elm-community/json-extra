@@ -9,7 +9,7 @@ module Json.Decode.Extra where
 
 -}
 
-import Json.Decode (..)
+import Json.Decode exposing (..)
 import Date
 import Time
 
@@ -82,10 +82,10 @@ date : Decoder Date.Date
 date = customDecoder string Date.fromString
 
 -- {-| Extract a time value.
--- 
+--
 -- Note that this function is not total, it will throw an exception given an incorrectly formatted time value.
 -- See `Time.fromString` and `Json.customDecoder`.
--- 
+--
 -- -}
 -- time : Decoder Time.Time
 -- time = customDecoder string (Date.fromString >> Date.toTime)
