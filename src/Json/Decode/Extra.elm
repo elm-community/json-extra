@@ -13,6 +13,9 @@ module Json.Decode.Extra where
 # Dict
 @docs dict
 
+# Maybe
+@docs withDefault
+
 -}
 
 import Json.Decode exposing (..)
@@ -130,3 +133,17 @@ decodeDictFromTuples keyDecoder tuples =
 
                 Err error ->
                     Decode.fail error
+
+
+{-| Try running the given decoder; if that fails, then succeed with the given
+fallback value.
+
+  -- If this field is missing or malformed, it will decode to [].
+  ("optionalNames" := list string)
+      |> (withDefault [])
+-}
+withDefault : a -> Decoder a -> Decoder a
+withDefault fallback decoder =
+    Decode.maybe decoder
+        `Decode.andThen`
+            ((Maybe.withDefault fallback) >> Decode.succeed)
