@@ -7,6 +7,9 @@ module Json.Decode.Extra where
 # Incremental Decoding
 @docs apply
 
+# Set
+@docs set
+
 -}
 
 import Json.Decode exposing (..)
@@ -89,3 +92,11 @@ date = customDecoder string Date.fromString
 -- -}
 -- time : Decoder Time.Time
 -- time = customDecoder string (Date.fromString >> Date.toTime)
+
+
+{-| Extract a set. -}
+set : Decoder comparable -> Decoder (Set comparable)
+set decoder =
+    (Decode.list decoder)
+        `Decode.andThen`
+            (Set.fromList >> Decode.succeed)
