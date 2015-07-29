@@ -16,6 +16,9 @@ module Json.Decode.Extra where
 # Maybe
 @docs withDefault, maybeNull
 
+# Recursively Defined Decoders
+@docs lazy
+
 -}
 
 import Json.Decode exposing (..)
@@ -159,3 +162,18 @@ Just that value. If the value is missing, fail.
 maybeNull : Decoder a -> Decoder (Maybe a)
 maybeNull decoder =
     Decode.oneOf [Decode.null Nothing, Decode.map Just decoder]
+
+
+{-| Enable decoders defined in terms of themselves by lazily creating them.
+
+  treeNode =
+      object2
+          instantiateTreeNode
+          ("name" := string)
+          ("children" := list (lazy (\_ -> treeNode)))
+-}
+lazy : (() -> Decoder a) -> Decoder a
+lazy getDecoder =
+    Decode.customDecoder Decode.value <|
+       \rawValue ->
+            Decode.decodeValue (getDecoder ()) rawValue
