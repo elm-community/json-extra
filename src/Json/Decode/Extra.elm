@@ -10,6 +10,9 @@ module Json.Decode.Extra where
 # Set
 @docs set
 
+# Dict
+@docs dict
+
 -}
 
 import Json.Decode exposing (..)
@@ -100,3 +103,30 @@ set decoder =
     (Decode.list decoder)
         `Decode.andThen`
             (Set.fromList >> Decode.succeed)
+
+
+{-| Extract a dict. -}
+dict : Decoder comparable -> Decoder v -> Decoder (Dict comparable v)
+dict keyDecoder valueDecoder =
+    (Decode.dict valueDecoder) `Decode.andThen`
+        (Dict.toList >> (decodeDictFromTuples keyDecoder))
+
+
+{- Helper function for dict -}
+decodeDictFromTuples :
+    Decoder comparable ->
+    List (String, v) ->
+    Decoder (Dict comparable v)
+decodeDictFromTuples keyDecoder tuples =
+    case tuples of
+        [] ->
+            Decode.succeed Dict.empty
+
+        (strKey, value)::rest ->
+            case Decode.decodeString keyDecoder strKey of
+                Ok key ->
+                    (decodeDictFromTuples keyDecoder rest) `Decode.andThen`
+                        ((Dict.insert key value) >> Decode.succeed)
+
+                Err error ->
+                    Decode.fail error
