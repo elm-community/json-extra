@@ -14,7 +14,7 @@ module Json.Decode.Extra where
 @docs dict
 
 # Maybe
-@docs withDefault
+@docs withDefault, maybeNull
 
 -}
 
@@ -147,3 +147,15 @@ withDefault fallback decoder =
     Decode.maybe decoder
         `Decode.andThen`
             ((Maybe.withDefault fallback) >> Decode.succeed)
+
+
+{-| Extract a value that might be null. If the value is null,
+succeed with Nothing. If the value is present but not null, succeed with
+Just that value. If the value is missing, fail.
+
+  -- Yields Nothing if middleName is null, and Just middleName if it's a string.
+  "middleName" := maybeNull string
+-}
+maybeNull : Decoder a -> Decoder (Maybe a)
+maybeNull decoder =
+    Decode.oneOf [Decode.null Nothing, Decode.map Just decoder]
