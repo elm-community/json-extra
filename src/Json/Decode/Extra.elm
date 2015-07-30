@@ -24,6 +24,8 @@ module Json.Decode.Extra where
 import Json.Decode exposing (..)
 import Date
 import Time
+import Dict exposing (Dict)
+import Set exposing (Set)
 
 {-| Can be helpful when decoding large objects incrementally.
 
