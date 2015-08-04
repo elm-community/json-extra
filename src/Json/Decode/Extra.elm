@@ -24,6 +24,8 @@ module Json.Decode.Extra where
 import Json.Decode exposing (..)
 import Date
 import Time
+import Dict exposing (Dict)
+import Set exposing (Set)
 
 {-| Can be helpful when decoding large objects incrementally.
 
@@ -106,15 +108,15 @@ date = customDecoder string Date.fromString
 {-| Extract a set. -}
 set : Decoder comparable -> Decoder (Set comparable)
 set decoder =
-    (Decode.list decoder)
-        `Decode.andThen`
-            (Set.fromList >> Decode.succeed)
+    (list decoder)
+        `andThen`
+            (Set.fromList >> succeed)
 
 
 {-| Extract a dict. -}
 dict : Decoder comparable -> Decoder v -> Decoder (Dict comparable v)
 dict keyDecoder valueDecoder =
-    (Decode.dict valueDecoder) `Decode.andThen`
+    (dict valueDecoder) `andThen`
         (Dict.toList >> (decodeDictFromTuples keyDecoder))
 
 
@@ -126,16 +128,16 @@ decodeDictFromTuples :
 decodeDictFromTuples keyDecoder tuples =
     case tuples of
         [] ->
-            Decode.succeed Dict.empty
+            succeed Dict.empty
 
         (strKey, value)::rest ->
-            case Decode.decodeString keyDecoder strKey of
+            case decodeString keyDecoder strKey of
                 Ok key ->
-                    (decodeDictFromTuples keyDecoder rest) `Decode.andThen`
-                        ((Dict.insert key value) >> Decode.succeed)
+                    (decodeDictFromTuples keyDecoder rest) `andThen`
+                        ((Dict.insert key value) >> succeed)
 
                 Err error ->
-                    Decode.fail error
+                    fail error
 
 
 {-| Try running the given decoder; if that fails, then succeed with the given
@@ -147,9 +149,9 @@ fallback value.
 -}
 withDefault : a -> Decoder a -> Decoder a
 withDefault fallback decoder =
-    Decode.maybe decoder
-        `Decode.andThen`
-            ((Maybe.withDefault fallback) >> Decode.succeed)
+    maybe decoder
+        `andThen`
+            ((Maybe.withDefault fallback) >> succeed)
 
 
 {-| Extract a value that might be null. If the value is null,
@@ -161,7 +163,7 @@ Just that value. If the value is missing, fail.
 -}
 maybeNull : Decoder a -> Decoder (Maybe a)
 maybeNull decoder =
-    Decode.oneOf [Decode.null Nothing, Decode.map Just decoder]
+    oneOf [null Nothing, map Just decoder]
 
 
 {-| Enable decoders defined in terms of themselves by lazily creating them.
@@ -174,6 +176,6 @@ maybeNull decoder =
 -}
 lazy : (() -> Decoder a) -> Decoder a
 lazy getDecoder =
-    Decode.customDecoder Decode.value <|
+    customDecoder value <|
        \rawValue ->
-            Decode.decodeValue (getDecoder ()) rawValue
+            decodeValue (getDecoder ()) rawValue
