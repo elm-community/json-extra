@@ -1,4 +1,4 @@
-module Json.Decode.Extra where
+module Json.Decode.Extra (date, apply, set, dict2, withDefault, maybeNull, lazy) where
 {-| Convenience functions for working with Json
 
 # Date
