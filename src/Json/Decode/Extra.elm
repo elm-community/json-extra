@@ -143,9 +143,10 @@ decodeDictFromTuples keyDecoder tuples =
 {-| Try running the given decoder; if that fails, then succeed with the given
 fallback value.
 
-  -- If this field is missing or malformed, it will decode to [].
-  ("optionalNames" := list string)
+    -- If this field is missing or malformed, it will decode to [].
+    ("optionalNames" := list string)
       |> (withDefault [])
+
 -}
 withDefault : a -> Decoder a -> Decoder a
 withDefault fallback decoder =
@@ -158,8 +159,9 @@ withDefault fallback decoder =
 succeed with Nothing. If the value is present but not null, succeed with
 Just that value. If the value is missing, fail.
 
-  -- Yields Nothing if middleName is null, and Just middleName if it's a string.
-  "middleName" := maybeNull string
+    -- Yields Nothing if middleName is null, and Just middleName if it's a string.
+    "middleName" := maybeNull string
+
 -}
 maybeNull : Decoder a -> Decoder (Maybe a)
 maybeNull decoder =
@@ -168,11 +170,12 @@ maybeNull decoder =
 
 {-| Enable decoders defined in terms of themselves by lazily creating them.
 
-  treeNode =
+    treeNode =
       object2
-          instantiateTreeNode
-          ("name" := string)
-          ("children" := list (lazy (\_ -> treeNode)))
+        instantiateTreeNode
+        ("name" := string)
+        ("children" := list (lazy (\_ -> treeNode)))
+
 -}
 lazy : (() -> Decoder a) -> Decoder a
 lazy getDecoder =
