@@ -11,7 +11,7 @@ module Json.Decode.Extra where
 @docs set
 
 # Dict
-@docs dict
+@docs dict2
 
 # Maybe
 @docs withDefault, maybeNull
@@ -113,9 +113,9 @@ set decoder =
             (Set.fromList >> succeed)
 
 
-{-| Extract a dict. -}
-dict : Decoder comparable -> Decoder v -> Decoder (Dict comparable v)
-dict keyDecoder valueDecoder =
+{-| Extract a dict using separate decoders for keys and values. -}
+dict2 : Decoder comparable -> Decoder v -> Decoder (Dict comparable v)
+dict2 keyDecoder valueDecoder =
     (dict valueDecoder) `andThen`
         (Dict.toList >> (decodeDictFromTuples keyDecoder))
 
