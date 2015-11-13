@@ -1,11 +1,11 @@
-module Json.Decode.Extra (date, apply, set, dict2, withDefault, maybeNull, lazy) where
+module Json.Decode.Extra (date, apply, (|:), set, dict2, withDefault, maybeNull, lazy) where
 {-| Convenience functions for working with Json
 
 # Date
 @docs date
 
 # Incremental Decoding
-@docs apply
+@docs apply, (|:)
 
 # Set
 @docs set
@@ -85,6 +85,32 @@ This is a shortened form of
 apply : Decoder (a -> b) -> Decoder a -> Decoder b
 apply f aDecoder =
   f `andThen` (\f' -> f' `map` aDecoder)
+
+
+{-| Infix version of `apply` that makes for a nice DSL when decoding objects:
+
+locationDecoder : Decoder Location
+locationDecoder =
+    succeed Location
+        |: ("id" := int)
+        |: ("name" := string)
+        |: ("address" := string)
+        |: ("city" := string)
+        |: ("state" := string)
+
+
+type alias Location =
+    { id : Int
+    , name : String
+    , address : String
+    , city : String
+    , state : String
+    }
+
+-}
+(|:) : Decoder (a -> b) -> Decoder a -> Decoder b
+(|:) =
+  apply
 
 {-| Extract a date.
 
