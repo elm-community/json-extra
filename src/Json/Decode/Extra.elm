@@ -89,23 +89,23 @@ apply f aDecoder =
 
 {-| Infix version of `apply` that makes for a nice DSL when decoding objects:
 
-locationDecoder : Decoder Location
-locationDecoder =
-    succeed Location
-        |: ("id" := int)
-        |: ("name" := string)
-        |: ("address" := string)
-        |: ("city" := string)
-        |: ("state" := string)
+    locationDecoder : Decoder Location
+    locationDecoder =
+        succeed Location
+            |: ("id" := int)
+            |: ("name" := string)
+            |: ("address" := string)
+            |: ("city" := string)
+            |: ("state" := string)
 
 
-type alias Location =
-    { id : Int
-    , name : String
-    , address : String
-    , city : String
-    , state : String
-    }
+    type alias Location =
+        { id : Int
+        , name : String
+        , address : String
+        , city : String
+        , state : String
+        }
 
 -}
 (|:) : Decoder (a -> b) -> Decoder a -> Decoder b
