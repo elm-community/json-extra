@@ -83,8 +83,8 @@ This is a shortened form of
 
 -}
 apply : Decoder (a -> b) -> Decoder a -> Decoder b
-apply f aDecoder =
-  f `andThen` (\f' -> f' `map` aDecoder)
+apply =
+  object2 (<|)
 
 
 {-| Infix version of `apply` that makes for a nice DSL when decoding objects:
