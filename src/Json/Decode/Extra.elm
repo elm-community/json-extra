@@ -1,4 +1,5 @@
-module Json.Decode.Extra (date, apply, (|:), set, dict2, withDefault, maybeNull, lazy) where
+module Json.Decode.Extra exposing (date, apply, (|:), set, dict2, withDefault, maybeNull, lazy)
+
 {-| Convenience functions for working with Json
 
 # Date
@@ -23,9 +24,9 @@ module Json.Decode.Extra (date, apply, (|:), set, dict2, withDefault, maybeNull,
 
 import Json.Decode exposing (..)
 import Date
-import Time
 import Dict exposing (Dict)
 import Set exposing (Set)
+
 
 {-| Can be helpful when decoding large objects incrementally.
 
@@ -199,6 +200,7 @@ We win!
 (|:) =
   apply
 
+
 {-| Extract a date.
 
 Note that this function is not total, it will throw an exception given an incorrectly formatted date.
@@ -206,7 +208,10 @@ See `Date.fromString` and `Json.customDecoder`.
 
 -}
 date : Decoder Date.Date
-date = customDecoder string Date.fromString
+date =
+  customDecoder string Date.fromString
+
+
 
 -- {-| Extract a time value.
 --
@@ -218,39 +223,40 @@ date = customDecoder string Date.fromString
 -- time = customDecoder string (Date.fromString >> Date.toTime)
 
 
-{-| Extract a set. -}
+{-| Extract a set.
+-}
 set : Decoder comparable -> Decoder (Set comparable)
 set decoder =
-    (list decoder)
-        `andThen`
-            (Set.fromList >> succeed)
+  (list decoder)
+    `andThen` (Set.fromList >> succeed)
 
 
-{-| Extract a dict using separate decoders for keys and values. -}
+{-| Extract a dict using separate decoders for keys and values.
+-}
 dict2 : Decoder comparable -> Decoder v -> Decoder (Dict comparable v)
 dict2 keyDecoder valueDecoder =
-    (dict valueDecoder) `andThen`
-        (Dict.toList >> (decodeDictFromTuples keyDecoder))
+  (dict valueDecoder)
+    `andThen` (Dict.toList >> (decodeDictFromTuples keyDecoder))
+
 
 
 {- Helper function for dict -}
-decodeDictFromTuples :
-    Decoder comparable ->
-    List (String, v) ->
-    Decoder (Dict comparable v)
+
+
+decodeDictFromTuples : Decoder comparable -> List ( String, v ) -> Decoder (Dict comparable v)
 decodeDictFromTuples keyDecoder tuples =
-    case tuples of
-        [] ->
-            succeed Dict.empty
+  case tuples of
+    [] ->
+      succeed Dict.empty
 
-        (strKey, value)::rest ->
-            case decodeString keyDecoder strKey of
-                Ok key ->
-                    (decodeDictFromTuples keyDecoder rest) `andThen`
-                        ((Dict.insert key value) >> succeed)
+    ( strKey, value ) :: rest ->
+      case decodeString keyDecoder strKey of
+        Ok key ->
+          (decodeDictFromTuples keyDecoder rest)
+            `andThen` ((Dict.insert key value) >> succeed)
 
-                Err error ->
-                    fail error
+        Err error ->
+          fail error
 
 
 {-| Try running the given decoder; if that fails, then succeed with the given
@@ -263,9 +269,8 @@ fallback value.
 -}
 withDefault : a -> Decoder a -> Decoder a
 withDefault fallback decoder =
-    maybe decoder
-        `andThen`
-            ((Maybe.withDefault fallback) >> succeed)
+  maybe decoder
+    `andThen` ((Maybe.withDefault fallback) >> succeed)
 
 
 {-| Extract a value that might be null. If the value is null,
@@ -278,7 +283,7 @@ Just that value. If the value is missing, fail.
 -}
 maybeNull : Decoder a -> Decoder (Maybe a)
 maybeNull decoder =
-    oneOf [null Nothing, map Just decoder]
+  oneOf [ null Nothing, map Just decoder ]
 
 
 {-| Enable decoders defined in terms of themselves by lazily creating them.
@@ -292,6 +297,6 @@ maybeNull decoder =
 -}
 lazy : (() -> Decoder a) -> Decoder a
 lazy getDecoder =
-    customDecoder value <|
-       \rawValue ->
-            decodeValue (getDecoder ()) rawValue
+  customDecoder value
+    <| \rawValue ->
+        decodeValue (getDecoder ()) rawValue
