@@ -201,11 +201,7 @@ We win!
   apply
 
 
-{-| Extract a date.
-
-Note that this function is not total, it will throw an exception given an incorrectly formatted date.
-See `Date.fromString` and `Json.customDecoder`.
-
+{-| Extract a date using [`Date.fromString`](http://package.elm-lang.org/packages/elm-lang/core/latest/Date#fromString)
 -}
 date : Decoder Date.Date
 date =
