@@ -212,17 +212,6 @@ date =
   customDecoder string Date.fromString
 
 
-
--- {-| Extract a time value.
---
--- Note that this function is not total, it will throw an exception given an incorrectly formatted time value.
--- See `Time.fromString` and `Json.customDecoder`.
---
--- -}
--- time : Decoder Time.Time
--- time = customDecoder string (Date.fromString >> Date.toTime)
-
-
 {-| Extract a set.
 -}
 set : Decoder comparable -> Decoder (Set comparable)
