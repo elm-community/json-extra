@@ -1,4 +1,4 @@
-module Json.Decode.Extra exposing (date, apply, (|:), set, dict2, withDefault, maybeNull, lazy)
+module Json.Decode.Extra exposing (date, apply, (|:), sequence, set, dict2, withDefault, maybeNull, lazy)
 
 {-| Convenience functions for working with Json
 
@@ -7,6 +7,9 @@ module Json.Decode.Extra exposing (date, apply, (|:), set, dict2, withDefault, m
 
 # Incremental Decoding
 @docs apply, (|:)
+
+# List
+@docs sequence
 
 # Set
 @docs set
@@ -285,3 +288,44 @@ lazy getDecoder =
   customDecoder value
     <| \rawValue ->
         decodeValue (getDecoder ()) rawValue
+
+
+{-| This function turns a list of decoders into a decoder that returns a list.
+
+The returned decoder will zip the list of decoders with a list of values, matching each decoder with exactly one value at the same position. This is most often useful in cases when you find yourself needing to dynamically generate a list of decoders based on some data, and decode some other data with this list of decoders. There are other functions that seem similar:
+
+- `Json.Decode.oneOf`, which will try every decoder for every value in the list, might be too lenient (e.g. a `4.0` will be interpreted as an `Int` just fine).
+- `Json.Decode.tuple1-8`, which do something similar, but have a hard-coded length. As opposed to these functions, where you can decode several different types and combine them, you'll need to manually unify all those types in one sum type to use `sequence`.
+
+Note that this function, unlike `List.map2`'s behaviour, expects the list of decoders to have the same length as the list of values in the JSON.
+
+    type FloatOrInt
+        = I Int
+        | F Float
+
+    -- we'd like a list like [I, F, I] from this
+    -- fairly contrived example, but data like this does exist!
+    json = "[1, 2.0, 3]"
+
+    intDecoder = Decode.map I Decode.int
+    floatDecoder = Decode.map F Decode.float
+
+    decoder : Decoder (List FloatOrInt)
+    decoder =
+        sequence [ intDecoder, floatDecoder, intDecoder ]
+
+    decoded = Decode.decodeString decoder json
+    -- Ok ([I 1,F 2,I 3]) : Result String (List FloatOrInt)
+
+-}
+sequence : List (Decoder a) -> Decoder (List a)
+sequence decoders =
+  customDecoder
+    (list value)
+    (\jsonValues ->
+       if List.length jsonValues /= List.length decoders then
+         Err "Number of decoders does not match number of values"
+       else
+         List.map2 decodeValue decoders jsonValues
+           |> List.foldr (Result.map2 (::)) (Ok [])
+    )
