@@ -9,6 +9,9 @@
 **Additions:**
 - `fromResult : Result String a -> Decoder a` - convert a `Result` to a `Decoder`, helpful in `andThen` callbacks following the removal of `Json.Decode.customDecoder`
 
+**Other Stuff:**
+- Code style conforms to elm-format
+
 #### 1.1.0
 
 **Additions:**
