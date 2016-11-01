@@ -1,7 +1,3 @@
-# Convenience functions for working with Json
-Experimental package with convenience functions for working with Json.
-Note that this API is experimental and likely to go through many more iterations.
+# json-extra
 
-Feedback and contributions are very welcome.
-
-
+Convenience functions for working with JSON
