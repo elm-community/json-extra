@@ -8,6 +8,7 @@
 
 **Additions:**
 - `fromResult : Result String a -> Decoder a` - convert a `Result` to a `Decoder`, helpful in `andThen` callbacks following the removal of `Json.Decode.customDecoder`
+- `Json.Encode.Extra.maybe : (a -> Value) -> Maybe a -> Value` - encode a `Maybe a` given an encoder for `a`. Thanks to @hendore for this addition.
 
 **Other Stuff:**
 - Code style conforms to elm-format
