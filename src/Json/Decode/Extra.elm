@@ -33,7 +33,7 @@ import Set exposing (Set)
 
 {-| Can be helpful when decoding large objects incrementally.
 
-See [the `andMap` docs](https://github.com/elm-community/json-extra/blob/master/docs/andMap.md)
+See [the `andMap` docs](https://github.com/elm-community/json-extra/blob/2.0.0/docs/andMap.md)
 for an explanation of how `andMap` works and how to use it.
 -}
 andMap : Decoder a -> Decoder (a -> b) -> Decoder b
@@ -43,7 +43,7 @@ andMap =
 
 {-| Infix version of `andMap` that makes for a nice DSL when decoding objects.
 
-See [the `(|:)` docs](https://github.com/elm-community/json-extra/blob/master/docs/infixAndMap.md)
+See [the `(|:)` docs](https://github.com/elm-community/json-extra/blob/2.0.0/docs/infixAndMap.md)
 for an explanation of how `(|:)` works and how to use it.
 -}
 (|:) : Decoder (a -> b) -> Decoder a -> Decoder b
