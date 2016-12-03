@@ -1,4 +1,4 @@
-module Json.Decode.Extra exposing (date, andMap, (|:), sequence, set, dict2, withDefault, fromResult)
+module Json.Decode.Extra exposing (date, andMap, (|:), sequence, set, dict2, withDefault, optionalField, fromResult)
 
 {-| Convenience functions for working with Json
 
@@ -18,7 +18,7 @@ module Json.Decode.Extra exposing (date, andMap, (|:), sequence, set, dict2, wit
 @docs dict2
 
 # Maybe
-@docs withDefault
+@docs withDefault, optionalField
 
 # Result
 @docs fromResult
@@ -105,6 +105,38 @@ withDefault : a -> Decoder a -> Decoder a
 withDefault fallback decoder =
     maybe decoder
         |> andThen ((Maybe.withDefault fallback) >> succeed)
+
+
+{-| If a field is missing, succeed with `Nothing`. If it is present, decode it
+as normal and wrap successes in a `Just`.
+
+When decoding with
+[`maybe`](http://package.elm-lang.org/packages/elm-lang/core/latest/Json-Decode#maybe),
+if a field is present but malformed, you get a success and Nothing.
+`optionalField` gives you a failed decoding in that case, so you know
+you received malformed data.
+
+    -- If the "stuff" field is missing, decode to Nothing.
+    -- If the "stuff" field is present and valid, decode to Just (List String).
+    -- If the "stuff" field is present but not a List String, fail decoding.
+    optionalField "stuff" (list string)
+
+-}
+optionalField : String -> Decoder a -> Decoder (Maybe a)
+optionalField fieldName decoder =
+    let
+        finishDecoding json =
+            case decodeValue (field fieldName value) json of
+                Ok val ->
+                    -- The field is present, so run the decoder on it.
+                    map Just decoder
+
+                Err _ ->
+                    -- The field was missing, which is fine!
+                    succeed Nothing
+    in
+        value
+            |> andThen finishDecoding
 
 
 {-| This function turns a list of decoders into a decoder that returns a list.
