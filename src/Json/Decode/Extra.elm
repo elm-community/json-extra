@@ -129,7 +129,7 @@ optionalField fieldName decoder =
             case decodeValue (field fieldName value) json of
                 Ok val ->
                     -- The field is present, so run the decoder on it.
-                    map Just decoder
+                    map Just (field fieldName decoder)
 
                 Err _ ->
                     -- The field was missing, which is fine!
