@@ -1,4 +1,4 @@
-module Json.Decode.Extra exposing (date, andMap, (|:), sequence, set, dict2, withDefault, optionalField, fromResult)
+module Json.Decode.Extra exposing (date, andMap, (|:), sequence, set, dict2, withDefault, optionalField, fromResult, parseInt, parseFloat)
 
 {-| Convenience functions for working with Json
 
@@ -23,12 +23,16 @@ module Json.Decode.Extra exposing (date, andMap, (|:), sequence, set, dict2, wit
 # Result
 @docs fromResult
 
+# Number
+@docs parseInt, parseFloat
+
 -}
 
 import Json.Decode exposing (..)
 import Date
 import Dict exposing (Dict)
 import Set exposing (Set)
+import String
 
 
 {-| Can be helpful when decoding large objects incrementally.
@@ -204,3 +208,19 @@ fromResult result =
 
         Err errorMessage ->
             fail errorMessage
+
+
+{-| Extract an int using [`String.toInt`](http://package.elm-lang.org/packages/elm-lang/core/latest/String#toInt)
+-}
+parseInt : Decoder Int
+parseInt =
+    string
+        |> andThen (String.toInt >> fromResult)
+
+
+{-| Extract a float using [`String.toFloat`](http://package.elm-lang.org/packages/elm-lang/core/latest/String#toFloat)
+-}
+parseFloat : Decoder Float
+parseFloat =
+    string
+        |> andThen (String.toFloat >> fromResult)
