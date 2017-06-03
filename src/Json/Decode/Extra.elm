@@ -1,4 +1,15 @@
-module Json.Decode.Extra exposing ((|:), andMap, date, dict2, fromResult, optionalField, sequence, set, withDefault)
+module Json.Decode.Extra
+    exposing
+        ( (|:)
+        , andMap
+        , date
+        , dict2
+        , fromResult
+        , optionalField
+        , sequence
+        , set
+        , withDefault
+        )
 
 {-| Convenience functions for working with Json
 
