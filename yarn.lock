@@ -261,9 +261,9 @@ ecc-jsbn@~0.1.1:
   dependencies:
     jsbn "~0.1.0"
 
-"elm-doc-test@git+ssh://git@github.com:zwilias/elm-doc-test.git":
+elm-doc-test@^2.2.3:
   version "2.2.3"
-  resolved "git+ssh://git@github.com:zwilias/elm-doc-test.git#fdc9c763c8bc177f154685b69f6b4e986ef9dccc"
+  resolved "https://registry.yarnpkg.com/elm-doc-test/-/elm-doc-test-2.2.3.tgz#62abf2dd708751169f39b495b8d481c07ff10f55"
   dependencies:
     fs-extra "^1.0.0"
     mkdirp "^0.5.1"

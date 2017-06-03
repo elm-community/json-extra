@@ -1,9 +1,10 @@
 {
   "devDependencies": {
-    "elm-doc-test": "git+ssh://git@github.com:zwilias/elm-doc-test.git",
-    "elm-test": "^0.18.4"
+    "elm-doc-test": "^2.2.3",
+    "elm-test": "^0.18.4",
+    "rimraf": "^2.6.1"
   },
   "scripts": {
-    "test": "yarn elm-doc-test && yarn elm-test"
+    "test": "elm-doc-test && rimraf tests/Doc/*.elm && elm-test"
   }
 }
