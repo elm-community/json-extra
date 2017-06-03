@@ -1,4 +1,11 @@
-### 2.1.1
+### 2.2.0
+
+**Additions:**
+- `parseInt` and `parseFloat` for weird api's that return numbers as strings
+- `doubleEncoded` for a more generic _json as a string in json_ issues
+
+**Fixes:**
+- `optionalField` decodes the field, rather than the surrounding object now.
 
 **Other Stuff:**
 - Code Style conforms to elm-format@exp
