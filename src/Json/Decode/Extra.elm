@@ -7,11 +7,11 @@ module Json.Decode.Extra
         , doubleEncoded
         , fromResult
         , optionalField
+        , parseFloat
+        , parseInt
         , sequence
         , set
         , withDefault
-        , parseInt
-        , parseFloat
         )
 
 {-| Convenience functions for working with Json
@@ -50,6 +50,7 @@ module Json.Decode.Extra
 # Result
 
 @docs fromResult
+
 
 # Encoded strings
 
@@ -287,6 +288,11 @@ fromResult result =
 
 
 {-| Extract an int using [`String.toInt`](http://package.elm-lang.org/packages/elm-lang/core/latest/String#toInt)
+
+    >>> """ { "field": "123" } """
+    ...     |> decodeString (field "field" parseInt)
+    Ok 123
+
 -}
 parseInt : Decoder Int
 parseInt =
@@ -294,6 +300,11 @@ parseInt =
 
 
 {-| Extract a float using [`String.toFloat`](http://package.elm-lang.org/packages/elm-lang/core/latest/String#toFloat)
+
+    >>> """ { "field": "50.5" } """
+    ...     |> decodeString (field "field" parseFloat)
+    Ok 50.5
+
 -}
 parseFloat : Decoder Float
 parseFloat =
@@ -317,4 +328,3 @@ field and yields the result (or fails if your decoder fails).
 doubleEncoded : Decoder a -> Decoder a
 doubleEncoded decoder =
     string |> andThen (fromResult << decodeString decoder)
-
