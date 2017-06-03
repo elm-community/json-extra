@@ -1,0 +1,9 @@
+{
+  "devDependencies": {
+    "elm-doc-test": "git+ssh://git@github.com:zwilias/elm-doc-test.git",
+    "elm-test": "^0.18.4"
+  },
+  "scripts": {
+    "test": "yarn elm-doc-test && yarn elm-test"
+  }
+}
