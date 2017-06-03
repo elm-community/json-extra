@@ -31,3 +31,6 @@ install:
   - chmod +x $(npm config get prefix)/bin/elm-make
   - npm install
   - elm package install --yes
+
+script:
+  - npm test
