@@ -10,6 +10,8 @@ module Json.Decode.Extra
         , sequence
         , set
         , withDefault
+        , parseInt
+        , parseFloat
         )
 
 {-| Convenience functions for working with Json
@@ -49,10 +51,9 @@ module Json.Decode.Extra
 
 @docs fromResult
 
+# Encoded strings
 
-# Json (double-encoded strings)
-
-@docs doubleEncoded
+@docs parseInt, parseFloat, doubleEncoded
 
 -}
 
@@ -60,6 +61,7 @@ import Date
 import Dict exposing (Dict)
 import Json.Decode exposing (..)
 import Set exposing (Set)
+import String
 
 
 {-| Can be helpful when decoding large objects incrementally.
@@ -284,6 +286,20 @@ fromResult result =
             fail errorMessage
 
 
+{-| Extract an int using [`String.toInt`](http://package.elm-lang.org/packages/elm-lang/core/latest/String#toInt)
+-}
+parseInt : Decoder Int
+parseInt =
+    string |> andThen (String.toInt >> fromResult)
+
+
+{-| Extract a float using [`String.toFloat`](http://package.elm-lang.org/packages/elm-lang/core/latest/String#toFloat)
+-}
+parseFloat : Decoder Float
+parseFloat =
+    string |> andThen (String.toFloat >> fromResult)
+
+
 {-| Extract a JSON-encoded string field
 
 "Yo dawg, I heard you like JSON..."
@@ -301,3 +317,4 @@ field and yields the result (or fails if your decoder fails).
 doubleEncoded : Decoder a -> Decoder a
 doubleEncoded decoder =
     string |> andThen (fromResult << decodeString decoder)
+
