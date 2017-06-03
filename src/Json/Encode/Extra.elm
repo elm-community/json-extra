@@ -2,7 +2,9 @@ module Json.Encode.Extra exposing (maybe)
 
 {-| Convenience functions for turning Elm values into Json values.
 
+
 # Maybe
+
 @docs maybe
 
 -}

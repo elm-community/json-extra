@@ -1,33 +1,47 @@
-module Json.Decode.Extra exposing (date, andMap, (|:), sequence, set, dict2, withDefault, optionalField, fromResult)
+module Json.Decode.Extra exposing ((|:), andMap, date, dict2, fromResult, optionalField, sequence, set, withDefault)
 
 {-| Convenience functions for working with Json
 
+
 # Date
+
 @docs date
 
+
 # Incremental Decoding
+
 @docs andMap, (|:)
 
+
 # List
+
 @docs sequence
 
+
 # Set
+
 @docs set
 
+
 # Dict
+
 @docs dict2
 
+
 # Maybe
+
 @docs withDefault, optionalField
 
+
 # Result
+
 @docs fromResult
 
 -}
 
-import Json.Decode exposing (..)
 import Date
 import Dict exposing (Dict)
+import Json.Decode exposing (..)
 import Set exposing (Set)
 
 
@@ -35,6 +49,7 @@ import Set exposing (Set)
 
 See [the `andMap` docs](https://github.com/elm-community/json-extra/blob/2.0.0/docs/andMap.md)
 for an explanation of how `andMap` works and how to use it.
+
 -}
 andMap : Decoder a -> Decoder (a -> b) -> Decoder b
 andMap =
@@ -45,6 +60,7 @@ andMap =
 
 See [the `(|:)` docs](https://github.com/elm-community/json-extra/blob/2.0.0/docs/infixAndMap.md)
 for an explanation of how `(|:)` works and how to use it.
+
 -}
 (|:) : Decoder (a -> b) -> Decoder a -> Decoder b
 (|:) =
@@ -63,7 +79,7 @@ date =
 -}
 set : Decoder comparable -> Decoder (Set comparable)
 set decoder =
-    (list decoder)
+    list decoder
         |> andThen (Set.fromList >> succeed)
 
 
@@ -71,8 +87,8 @@ set decoder =
 -}
 dict2 : Decoder comparable -> Decoder v -> Decoder (Dict comparable v)
 dict2 keyDecoder valueDecoder =
-    (dict valueDecoder)
-        |> andThen (Dict.toList >> (decodeDictFromTuples keyDecoder))
+    dict valueDecoder
+        |> andThen (Dict.toList >> decodeDictFromTuples keyDecoder)
 
 
 {-| Helper function for dict
@@ -86,8 +102,8 @@ decodeDictFromTuples keyDecoder tuples =
         ( strKey, value ) :: rest ->
             case decodeString keyDecoder strKey of
                 Ok key ->
-                    (decodeDictFromTuples keyDecoder rest)
-                        |> andThen ((Dict.insert key value) >> succeed)
+                    decodeDictFromTuples keyDecoder rest
+                        |> andThen (Dict.insert key value >> succeed)
 
                 Err error ->
                     fail error
@@ -104,7 +120,7 @@ fallback value.
 withDefault : a -> Decoder a -> Decoder a
 withDefault fallback decoder =
     maybe decoder
-        |> andThen ((Maybe.withDefault fallback) >> succeed)
+        |> andThen (Maybe.withDefault fallback >> succeed)
 
 
 {-| If a field is missing, succeed with `Nothing`. If it is present, decode it
@@ -135,16 +151,16 @@ optionalField fieldName decoder =
                     -- The field was missing, which is fine!
                     succeed Nothing
     in
-        value
-            |> andThen finishDecoding
+    value
+        |> andThen finishDecoding
 
 
 {-| This function turns a list of decoders into a decoder that returns a list.
 
 The returned decoder will zip the list of decoders with a list of values, matching each decoder with exactly one value at the same position. This is most often useful in cases when you find yourself needing to dynamically generate a list of decoders based on some data, and decode some other data with this list of decoders. There are other functions that seem similar:
 
-- `Json.Decode.oneOf`, which will try every decoder for every value in the list, might be too lenient (e.g. a `4.0` will be interpreted as an `Int` just fine).
-- `Json.Decode.tuple1-8`, which do something similar, but have a hard-coded length. As opposed to these functions, where you can decode several different types and combine them, you'll need to manually unify all those types in one sum type to use `sequence`.
+  - `Json.Decode.oneOf`, which will try every decoder for every value in the list, might be too lenient (e.g. a `4.0` will be interpreted as an `Int` just fine).
+  - `Json.Decode.tuple1-8`, which do something similar, but have a hard-coded length. As opposed to these functions, where you can decode several different types and combine them, you'll need to manually unify all those types in one sum type to use `sequence`.
 
 Note that this function, unlike `List.map2`'s behaviour, expects the list of decoders to have the same length as the list of values in the JSON.
 
@@ -152,18 +168,27 @@ Note that this function, unlike `List.map2`'s behaviour, expects the list of dec
         = I Int
         | F Float
 
+
     -- we'd like a list like [I, F, I] from this
     -- fairly contrived example, but data like this does exist!
-    json = "[1, 2.0, 3]"
 
-    intDecoder = Decode.map I Decode.int
-    floatDecoder = Decode.map F Decode.float
+    json =
+        "[1, 2.0, 3]"
+
+    intDecoder =
+        Decode.map I Decode.int
+
+    floatDecoder =
+        Decode.map F Decode.float
 
     decoder : Decoder (List FloatOrInt)
     decoder =
         sequence [ intDecoder, floatDecoder, intDecoder ]
 
-    decoded = Decode.decodeString decoder json
+    decoded =
+        Decode.decodeString decoder json
+
+
     -- Ok ([I 1,F 2,I 3]) : Result String (List FloatOrInt)
 
 -}
@@ -195,6 +220,7 @@ either already succeeded or failed based on the outcome.
     date : Decoder Date
     date =
         string |> andThen (Date.fromString >> fromResult)
+
 -}
 fromResult : Result String a -> Decoder a
 fromResult result =
