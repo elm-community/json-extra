@@ -19,10 +19,5 @@ import Json.Encode exposing (..)
 
 -}
 maybe : (a -> Value) -> Maybe a -> Value
-maybe encoder value =
-    case value of
-        Nothing ->
-            null
-
-        Just val ->
-            encoder val
+maybe encoder =
+    Maybe.map encoder >> Maybe.withDefault null

@@ -80,15 +80,15 @@ date =
 set : Decoder comparable -> Decoder (Set comparable)
 set decoder =
     list decoder
-        |> andThen (Set.fromList >> succeed)
+        |> map Set.fromList
 
 
 {-| Extract a dict using separate decoders for keys and values.
 -}
 dict2 : Decoder comparable -> Decoder v -> Decoder (Dict comparable v)
 dict2 keyDecoder valueDecoder =
-    dict valueDecoder
-        |> andThen (Dict.toList >> decodeDictFromTuples keyDecoder)
+    keyValuePairs valueDecoder
+        |> andThen (decodeDictFromTuples keyDecoder)
 
 
 {-| Helper function for dict
@@ -120,7 +120,7 @@ fallback value.
 withDefault : a -> Decoder a -> Decoder a
 withDefault fallback decoder =
     maybe decoder
-        |> andThen (Maybe.withDefault fallback >> succeed)
+        |> map (Maybe.withDefault fallback)
 
 
 {-| If a field is missing, succeed with `Nothing`. If it is present, decode it
@@ -145,7 +145,7 @@ optionalField fieldName decoder =
             case decodeValue (field fieldName value) json of
                 Ok val ->
                     -- The field is present, so run the decoder on it.
-                    map Just decoder
+                    map Just (field fieldName decoder)
 
                 Err _ ->
                     -- The field was missing, which is fine!
@@ -157,12 +157,22 @@ optionalField fieldName decoder =
 
 {-| This function turns a list of decoders into a decoder that returns a list.
 
-The returned decoder will zip the list of decoders with a list of values, matching each decoder with exactly one value at the same position. This is most often useful in cases when you find yourself needing to dynamically generate a list of decoders based on some data, and decode some other data with this list of decoders. There are other functions that seem similar:
+The returned decoder will zip the list of decoders with a list of values,
+matching each decoder with exactly one value at the same position. This is most
+often useful in cases when you find yourself needing to dynamically generate a
+list of decoders based on some data, and decode some other data with this list
+of decoders. There are other functions that seem similar:
 
-  - `Json.Decode.oneOf`, which will try every decoder for every value in the list, might be too lenient (e.g. a `4.0` will be interpreted as an `Int` just fine).
-  - `Json.Decode.tuple1-8`, which do something similar, but have a hard-coded length. As opposed to these functions, where you can decode several different types and combine them, you'll need to manually unify all those types in one sum type to use `sequence`.
+  - `Json.Decode.oneOf`, which will try every decoder for every value in the
+    list, might be too lenient (e.g. a `4.0` will be interpreted as an `Int`
+    just fine).
+  - `Json.Decode.tuple1-8`, which do something similar, but have a hard-coded
+    length. As opposed to these functions, where you can decode several
+    different types and combine them, you'll need to manually unify all those
+    types in one sum type to use `sequence`.
 
-Note that this function, unlike `List.map2`'s behaviour, expects the list of decoders to have the same length as the list of values in the JSON.
+Note that this function, unlike `List.map2`'s behaviour, expects the list of
+decoders to have the same length as the list of values in the JSON.
 
     type FloatOrInt
         = I Int
