@@ -1,3 +1,10 @@
+### 2.1.0
+
+**Other Stuff:**
+- Code Style conforms to elm-format@exp
+- Doc tests!
+- Travis integration
+
 ### 2.0.0
 
 **Breaking Changes:**
