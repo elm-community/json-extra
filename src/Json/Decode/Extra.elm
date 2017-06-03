@@ -4,6 +4,7 @@ module Json.Decode.Extra
         , andMap
         , date
         , dict2
+        , doubleEncoded
         , fromResult
         , optionalField
         , sequence
@@ -48,7 +49,9 @@ module Json.Decode.Extra
 
 @docs fromResult
 
+
 # Json (double-encoded strings)
+
 @docs doubleEncoded
 
 -}
@@ -280,6 +283,7 @@ fromResult result =
         Err errorMessage ->
             fail errorMessage
 
+
 {-| Extract a JSON-encoded string field
 
 "Yo dawg, I heard you like JSON..."
@@ -289,9 +293,11 @@ as a string) this is the function you're looking for. Give it a decoder
 and it will return a new decoder that applies your decoder to a string
 field and yields the result (or fails if your decoder fails).
 
-    log: Decoder (List LogEntry)
-    log = list (doubleEncoded LogEntry)
+    >>> """ { "logs": "[\\"log1\\", \\"log2\\"]"} """
+    ...     |> decodeString (field "logs" <| doubleEncoded (list string))
+    Ok [ "log1", "log2" ]
 
 -}
 doubleEncoded : Decoder a -> Decoder a
-doubleEncoded decoder = string |> andThen (fromResult << decodeString decoder)
+doubleEncoded decoder =
+    string |> andThen (fromResult << decodeString decoder)
