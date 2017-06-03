@@ -48,6 +48,9 @@ module Json.Decode.Extra
 
 @docs fromResult
 
+# Json (double-encoded strings)
+@docs doubleEncoded
+
 -}
 
 import Date
@@ -276,3 +279,19 @@ fromResult result =
 
         Err errorMessage ->
             fail errorMessage
+
+{-| Extract a JSON-encoded string field
+
+"Yo dawg, I heard you like JSON..."
+
+If someone has put JSON in your JSON (perhaps a JSON log entry, encoded
+as a string) this is the function you're looking for. Give it a decoder
+and it will return a new decoder that applies your decoder to a string
+field and yields the result (or fails if your decoder fails).
+
+    log: Decoder (List LogEntry)
+    log = list (doubleEncoded LogEntry)
+
+-}
+doubleEncoded : Decoder a -> Decoder a
+doubleEncoded decoder = string |> andThen (fromResult << decodeString decoder)
