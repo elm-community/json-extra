@@ -11,7 +11,7 @@ module Json.Decode.Extra
         , set
         , withDefault
         , parseInt
-        , parserFloat
+        , parseFloat
         )
 
 {-| Convenience functions for working with Json
