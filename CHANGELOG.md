@@ -1,3 +1,15 @@
+### 2.1.1
+
+**Other Stuff:**
+- Code Style conforms to elm-format@exp
+- Doc tests!
+- Travis integration
+
+### 2.1.0
+
+**Additions:**
+- `optionalField : String -> Json.Decode.Decoder a -> Json.Decode.Decoder (Maybe.Maybe a)` - Decode an optional field, succeeding with `Nothing` if it is missing, but still giving an error if it is malformed.
+
 ### 2.0.0
 
 **Breaking Changes:**

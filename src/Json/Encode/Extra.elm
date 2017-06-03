@@ -2,25 +2,26 @@ module Json.Encode.Extra exposing (maybe)
 
 {-| Convenience functions for turning Elm values into Json values.
 
+
 # Maybe
+
 @docs maybe
 
 -}
 
-import Json.Encode exposing (..)
+import Json.Encode exposing (Value, int, null)
 
 
 {-| Encode a Maybe value. If the value is `Nothing` it will be encoded as `null`
 
-    maybe int Nothing == Value null
-    maybe int (Just 50) == Value 50
+    >>> import Json.Encode exposing (int, null)
+    >>> maybe int (Just 50)
+    int 50
+
+    >>> maybe int Nothing
+    null
 
 -}
 maybe : (a -> Value) -> Maybe a -> Value
-maybe encoder value =
-    case value of
-        Nothing ->
-            null
-
-        Just val ->
-            encoder val
+maybe encoder =
+    Maybe.map encoder >> Maybe.withDefault null
