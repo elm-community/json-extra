@@ -16,6 +16,13 @@ module Json.Decode.Extra
 
 {-| Convenience functions for working with Json
 
+Examples assume the following imports:
+
+    >>> import Json.Decode exposing (..)
+    >>> import Date
+    >>> import Set
+    >>> import Dict
+
 
 # Date
 
@@ -89,9 +96,6 @@ for an explanation of how `(|:)` works and how to use it.
 
 {-| Extract a date using [`Date.fromString`](http://package.elm-lang.org/packages/elm-lang/core/latest/Date#fromString)
 
-    >>> import Json.Decode exposing (..)
-    >>> import Date
-
     >>> """ "2012-04-23T18:25:43.511Z" """
     ...     |> decodeString date
     Date.fromString "2012-04-23T18:25:43.511Z"
@@ -109,7 +113,6 @@ date =
 
 {-| Extract a set.
 
-    >>> import Set
     >>> "[ 1, 1, 5, 2 ]"
     ...     |> decodeString (set int)
     Ok <| Set.fromList [ 1, 2, 5 ]
@@ -122,8 +125,6 @@ set decoder =
 
 
 {-| Extract a dict using separate decoders for keys and values.
-
-    >>> import Dict
 
     >>> let
     ...     input = """
@@ -321,7 +322,8 @@ and it will return a new decoder that applies your decoder to a string
 field and yields the result (or fails if your decoder fails).
 
     >>> """ { "logs": "[\\"log1\\", \\"log2\\"]"} """
-    ...     |> decodeString (field "logs" <| doubleEncoded (list string))
+    ...     |> decodeString
+    ...         (field "logs" <| doubleEncoded (list string))
     Ok [ "log1", "log2" ]
 
 -}
