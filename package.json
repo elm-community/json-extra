@@ -1,10 +1,9 @@
 {
   "devDependencies": {
-    "elm-doc-test": "^2.2.3",
-    "elm-test": "^0.18.4",
-    "rimraf": "^2.6.1"
+    "elm-verify-examples": "^1.0.0",
+    "elm-test": "^0.18.4"
   },
   "scripts": {
-    "test": "elm-doc-test && rimraf tests/Doc/*.elm && elm-test"
+    "test": "elm-verify-examples && elm-test"
   }
 }

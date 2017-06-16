@@ -18,10 +18,10 @@ module Json.Decode.Extra
 
 Examples assume the following imports:
 
-    >>> import Json.Decode exposing (..)
-    >>> import Date
-    >>> import Set
-    >>> import Dict
+    import Json.Decode exposing (..)
+    import Date
+    import Set
+    import Dict
 
 
 # Date
@@ -96,13 +96,13 @@ for an explanation of how `(|:)` works and how to use it.
 
 {-| Extract a date using [`Date.fromString`](http://package.elm-lang.org/packages/elm-lang/core/latest/Date#fromString)
 
-    >>> """ "2012-04-23T18:25:43.511Z" """
-    ...     |> decodeString date
-    Date.fromString "2012-04-23T18:25:43.511Z"
+    """ "2012-04-23T18:25:43.511Z" """
+        |> decodeString date
+    --> Date.fromString "2012-04-23T18:25:43.511Z"
 
-    >>> """ "foo" """
-    ...     |> decodeString date
-    Err "I ran into a `fail` decoder: Unable to parse 'foo' as a date. Dates must be in the ISO 8601 format."
+    """ "foo" """
+        |> decodeString date
+    --> Err "I ran into a `fail` decoder: Unable to parse 'foo' as a date. Dates must be in the ISO 8601 format."
 
 -}
 date : Decoder Date.Date
@@ -113,9 +113,9 @@ date =
 
 {-| Extract a set.
 
-    >>> "[ 1, 1, 5, 2 ]"
-    ...     |> decodeString (set int)
-    Ok <| Set.fromList [ 1, 2, 5 ]
+    "[ 1, 1, 5, 2 ]"
+        |> decodeString (set int)
+    --> Ok <| Set.fromList [ 1, 2, 5 ]
 
 -}
 set : Decoder comparable -> Decoder (Set comparable)
@@ -126,13 +126,9 @@ set decoder =
 
 {-| Extract a dict using separate decoders for keys and values.
 
-    >>> let
-    ...     input = """
-    ...     { "1": "foo", "2": "bar" }
-    ...     """
-    ... in
-    ... decodeString (dict2 int string) input
-    Ok <| Dict.fromList [ ( 1, "foo" ), ( 2, "bar" ) ]
+    """ { "1": "foo", "2": "bar" } """
+        |> decodeString (dict2 int string)
+    --> Ok <| Dict.fromList [ ( 1, "foo" ), ( 2, "bar" ) ]
 
 -}
 dict2 : Decoder comparable -> Decoder v -> Decoder (Dict comparable v)
@@ -162,17 +158,17 @@ decodeDictFromTuples keyDecoder tuples =
 {-| Try running the given decoder; if that fails, then succeed with the given
 fallback value.
 
-    >>> """ { "children": "oops" } """
-    ...     |> decodeString (field "children" (list string) |> withDefault [])
-    Ok []
+    """ { "children": "oops" } """
+        |> decodeString (field "children" (list string) |> withDefault [])
+    --> Ok []
 
-    >>> """ null """
-    ...     |> decodeString (field "children" (list string) |> withDefault [])
-    Ok []
+    """ null """
+        |> decodeString (field "children" (list string) |> withDefault [])
+    --> Ok []
 
-    >>> """ 30 """
-    ...     |> decodeString (int |> withDefault 42)
-    Ok 30
+    """ 30 """
+        |> decodeString (int |> withDefault 42)
+    --> Ok 30
 
 -}
 withDefault : a -> Decoder a -> Decoder a
@@ -194,21 +190,21 @@ Examples:
 
 If the "stuff" field is missing, decode to Nothing.
 
-    >>> """ { } """
-    ... |> decodeString (optionalField "stuff" string)
-    Ok Nothing
+    """ { } """
+        |> decodeString (optionalField "stuff" string)
+    --> Ok Nothing
 
 If the "stuff" field is present but not a String, fail decoding.
 
-    >>> """ { "stuff": [] } """
-    ... |> decodeString (optionalField "stuff" string)
-    Err "Expecting a String at _.stuff but instead got: []"
+    """ { "stuff": [] } """
+        |> decodeString (optionalField "stuff" string)
+    --> Err "Expecting a String at _.stuff but instead got: []"
 
 If the "stuff" field is present and valid, decode to Just String.
 
-    >>> """ { "stuff": "yay!" } """
-    ... |> decodeString (optionalField "stuff" string)
-    Ok <| Just "yay!"
+    """ { "stuff": "yay!" } """
+        |> decodeString (optionalField "stuff" string)
+    --> Ok <| Just "yay!"
 
 -}
 optionalField : String -> Decoder a -> Decoder (Maybe a)
@@ -239,13 +235,13 @@ of decoders.
 Note that this function, unlike `List.map2`'s behaviour, expects the list of
 decoders to have the same length as the list of values in the JSON.
 
-    >>> sequence
-    ...     [ map Just string
-    ...     , succeed Nothing
-    ...     , map Just string
-    ...     ]
-    ...     |> flip decodeString """ [ "pick me", "ignore me", "and pick me" ] """
-    Ok [ Just "pick me", Nothing, Just "and pick me" ]
+    sequence
+        [ map Just string
+        , succeed Nothing
+        , map Just string
+        ]
+        |> flip decodeString """ [ "pick me", "ignore me", "and pick me" ] """
+    --> Ok [ Just "pick me", Nothing, Just "and pick me" ]
 
 -}
 sequence : List (Decoder a) -> Decoder (List a)
@@ -277,6 +273,10 @@ either already succeeded or failed based on the outcome.
     date =
         string |> andThen (Date.fromString >> fromResult)
 
+    """ "4" """
+        |> decodeString (string |> andThen (\s -> String.toInt s |> fromResult))
+    --> Ok 4
+
 -}
 fromResult : Result String a -> Decoder a
 fromResult result =
@@ -290,9 +290,9 @@ fromResult result =
 
 {-| Extract an int using [`String.toInt`](http://package.elm-lang.org/packages/elm-lang/core/latest/String#toInt)
 
-    >>> """ { "field": "123" } """
-    ...     |> decodeString (field "field" parseInt)
-    Ok 123
+    """ { "field": "123" } """
+        |> decodeString (field "field" parseInt)
+    --> Ok 123
 
 -}
 parseInt : Decoder Int
@@ -302,9 +302,9 @@ parseInt =
 
 {-| Extract a float using [`String.toFloat`](http://package.elm-lang.org/packages/elm-lang/core/latest/String#toFloat)
 
-    >>> """ { "field": "50.5" } """
-    ...     |> decodeString (field "field" parseFloat)
-    Ok 50.5
+    """ { "field": "50.5" } """
+        |> decodeString (field "field" parseFloat)
+    --> Ok 50.5
 
 -}
 parseFloat : Decoder Float
@@ -321,10 +321,10 @@ as a string) this is the function you're looking for. Give it a decoder
 and it will return a new decoder that applies your decoder to a string
 field and yields the result (or fails if your decoder fails).
 
-    >>> """ { "logs": "[\\"log1\\", \\"log2\\"]"} """
-    ...     |> decodeString
-    ...         (field "logs" <| doubleEncoded (list string))
-    Ok [ "log1", "log2" ]
+    """ { "logs": "[\\"log1\\", \\"log2\\"]"} """
+        |> decodeString
+            (field "logs" <| doubleEncoded (list string))
+    --> Ok [ "log1", "log2" ]
 
 -}
 doubleEncoded : Decoder a -> Decoder a

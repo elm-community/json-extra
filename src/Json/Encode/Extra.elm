@@ -14,12 +14,13 @@ import Json.Encode exposing (Value, int, null)
 
 {-| Encode a Maybe value. If the value is `Nothing` it will be encoded as `null`
 
-    >>> import Json.Encode exposing (int, null)
-    >>> maybe int (Just 50)
-    int 50
+    import Json.Encode exposing (int, null)
 
-    >>> maybe int Nothing
-    null
+    maybe int (Just 50)
+    --> int 50
+
+    maybe int Nothing
+    --> null
 
 -}
 maybe : (a -> Value) -> Maybe a -> Value
