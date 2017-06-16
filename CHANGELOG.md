@@ -1,3 +1,11 @@
+### 2.3.0
+
+**Additions:**
+- `indexedList` to get access to the current js array index while decoding
+
+**Other Stuff:**
+- `elm-doc-test` is now `elm-verify-examples`!
+
 ### 2.2.0
 
 **Additions:**

@@ -6,6 +6,7 @@ module Json.Decode.Extra
         , dict2
         , doubleEncoded
         , fromResult
+        , indexedList
         , optionalField
         , parseFloat
         , parseInt
@@ -36,7 +37,7 @@ Examples assume the following imports:
 
 # List
 
-@docs sequence
+@docs sequence, indexedList
 
 
 # Set
@@ -259,6 +260,24 @@ sequenceHelp decoders jsonValues =
         List.map2 decodeValue decoders jsonValues
             |> List.foldr (Result.map2 (::)) (Ok [])
             |> fromResult
+
+
+{-| Get access to the current index while decoding a list element.
+
+    """ [ "a", "b", "c", "d" ] """
+        |> decodeString (indexedList (\idx -> map (String.repeat idx) string))
+    --> Ok [ "", "b", "cc", "ddd" ]
+
+-}
+indexedList : (Int -> Decoder a) -> Decoder (List a)
+indexedList indexedDecoder =
+    list value
+        |> andThen
+            (\values ->
+                List.range 0 (List.length values - 1)
+                    |> List.map indexedDecoder
+                    |> sequence
+            )
 
 
 {-| Transform a result into a decoder
