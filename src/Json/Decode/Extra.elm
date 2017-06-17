@@ -189,22 +189,28 @@ you received malformed data.
 
 Examples:
 
+Let's define a `stuffDecoder` that extracts the `"stuff"` field, if it exists.
+
+    stuffDecoder : Decoder (Maybe String)
+    stuffDecoder =
+        optionalField "stuff" string
+
 If the "stuff" field is missing, decode to Nothing.
 
     """ { } """
-        |> decodeString (optionalField "stuff" string)
+        |> decodeString stuffDecoder
     --> Ok Nothing
 
 If the "stuff" field is present but not a String, fail decoding.
 
     """ { "stuff": [] } """
-        |> decodeString (optionalField "stuff" string)
+        |> decodeString stuffDecoder
     --> Err "Expecting a String at _.stuff but instead got: []"
 
 If the "stuff" field is present and valid, decode to Just String.
 
     """ { "stuff": "yay!" } """
-        |> decodeString (optionalField "stuff" string)
+        |> decodeString stuffDecoder
     --> Ok <| Just "yay!"
 
 -}
@@ -264,8 +270,12 @@ sequenceHelp decoders jsonValues =
 
 {-| Get access to the current index while decoding a list element.
 
+    repeatedStringDecoder : Int -> Decoder String
+    repeatedStringDecoder times =
+        string |> map (String.repeat times)
+
     """ [ "a", "b", "c", "d" ] """
-        |> decodeString (indexedList (\idx -> map (String.repeat idx) string))
+        |> decodeString (indexedList repeatedStringDecoder)
     --> Ok [ "", "b", "cc", "ddd" ]
 
 -}
@@ -288,13 +298,21 @@ uses the built-in `Date.fromString` to parse a `String` as a `Date`, and
 then converts the `Result` from that conversion into a decoder which has
 either already succeeded or failed based on the outcome.
 
-    date : Decoder Date
-    date =
-        string |> andThen (Date.fromString >> fromResult)
+    validateString : String -> Result String String
+    validateString input =
+        case input of
+            "" ->
+                Err "Empty string is not allowed"
+            _ ->
+                Ok input
 
-    """ "4" """
-        |> decodeString (string |> andThen (\s -> String.toInt s |> fromResult))
-    --> Ok 4
+    """ "something" """
+        |> decodeString (string |> andThen (fromResult << validateString))
+    --> Ok "something"
+
+    """ "" """
+        |> decodeString (string |> andThen (fromResult << validateString))
+    --> Err "I ran into a `fail` decoder: Empty string is not allowed"
 
 -}
 fromResult : Result String a -> Decoder a
@@ -340,9 +358,16 @@ as a string) this is the function you're looking for. Give it a decoder
 and it will return a new decoder that applies your decoder to a string
 field and yields the result (or fails if your decoder fails).
 
+    logEntriesDecoder : Decoder (List String)
+    logEntriesDecoder =
+        doubleEncoded (list string)
+
+    logsDecoder : Decoder (List String)
+    logsDecoder =
+        field "logs" logEntriesDecoder
+
     """ { "logs": "[\\"log1\\", \\"log2\\"]"} """
-        |> decodeString
-            (field "logs" <| doubleEncoded (list string))
+        |> decodeString logsDecoder
     --> Ok [ "log1", "log2" ]
 
 -}
