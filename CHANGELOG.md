@@ -1,3 +1,8 @@
+### 2.5.0
+
+**Additions:**
+- `dict` helps encoding `Dict`
+
 ### 2.4.0
 
 **Additions:**
