@@ -1,4 +1,4 @@
-### Unreleased
+### 2.4.0
 
 **Additions:**
 - `collection` helps with decoding array-like JavaScript structures such as `HTMLCollection`
