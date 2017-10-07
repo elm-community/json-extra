@@ -2,6 +2,8 @@ module Json.Decode.Extra
     exposing
         ( (|:)
         , andMap
+        , collection
+        , combine
         , date
         , dict2
         , doubleEncoded
@@ -37,7 +39,7 @@ Examples assume the following imports:
 
 # List
 
-@docs sequence, indexedList
+@docs collection, sequence, combine, indexedList
 
 
 # Set
@@ -374,3 +376,45 @@ field and yields the result (or fails if your decoder fails).
 doubleEncoded : Decoder a -> Decoder a
 doubleEncoded decoder =
     string |> andThen (fromResult << decodeString decoder)
+
+
+{-| Helps convering a list of decoders into a decoder for a list of that type.
+
+    decoders : List (Decoder String)
+    decoders =
+        [ field "foo" string
+        , field "bar" string
+        , field "another" string
+        ]
+
+    """ { "foo": "hello", "another": "!", "bar": "world" } """
+        |> decodeString (combine decoders)
+    --> Ok [ "hello", "world", "!" ]
+
+-}
+combine : List (Decoder a) -> Decoder (List a)
+combine =
+    List.foldr (map2 (::)) (succeed [])
+
+
+{-| Some JavaScript structures look like arrays, but aren't really. Examples
+include `HTMLCollection`, `NodeList` and everything else that has a `length`
+property, has values indexed by an integer key between 0 and `length`, but yet
+_is not_ a JavaScript Array.
+
+This decoder can come to the rescue.
+
+    """ { "length": 3, "0": "foo", "1": "bar", "2": "baz" } """
+        |> decodeString (collection string)
+    --> Ok [ "foo", "bar", "baz" ]
+
+-}
+collection : Decoder a -> Decoder (List a)
+collection decoder =
+    field "length" int
+        |> andThen
+            (\length ->
+                List.range 0 (length - 1)
+                    |> List.map (\index -> field (toString index) decoder)
+                    |> combine
+            )
