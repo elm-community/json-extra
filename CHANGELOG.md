@@ -1,3 +1,9 @@
+### Unreleased
+
+**Additions:**
+- `collection` helps with decoding array-like JavaScript structures such as `HTMLCollection`
+- `combine` helps combining a `List` of decoders into a single `Decoder` for a `List` of such things
+
 ### 2.3.0
 
 **Additions:**

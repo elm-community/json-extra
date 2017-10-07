@@ -1,7 +1,7 @@
 {
   "devDependencies": {
-    "elm-verify-examples": "^1.0.0",
-    "elm-test": "^0.18.4"
+    "elm-test": "^0.18.9",
+    "elm-verify-examples": "^1.0.2"
   },
   "scripts": {
     "test": "elm-verify-examples && elm-test"
