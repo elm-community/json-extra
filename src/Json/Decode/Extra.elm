@@ -39,7 +39,7 @@ Examples assume the following imports:
 
 # List
 
-@docs collection, sequence, combine, indexedList
+@docs collection, sequence, combine, indexedList, keys
 
 
 # Set
@@ -290,6 +290,18 @@ indexedList indexedDecoder =
                     |> List.map indexedDecoder
                     |> sequence
             )
+
+
+{-| Get a list of the keys of the JSON object
+
+    decodeString keys "{ \"alice\": 42, \"bob\": 99 }"
+        == [ "alice", "bob" ]
+
+-}
+keys : Decoder (List String)
+keys =
+    keyValuePairs (succeed ())
+        |> map (List.map Tuple.first)
 
 
 {-| Transform a result into a decoder
