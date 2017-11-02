@@ -292,7 +292,7 @@ indexedList indexedDecoder =
             )
 
 
-{-| Get a list of the keys of the JSON object
+{-| Get a list of the keys of a JSON object
 
     decodeString keys "{ \"alice\": 42, \"bob\": 99 }"
         == [ "alice", "bob" ]
