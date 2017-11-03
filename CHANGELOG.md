@@ -1,4 +1,4 @@
-### Unreleased
+### 2.6.0
 
 **Additions:**
 - `keys` allows extracting _only_ the keys from a JSON object
