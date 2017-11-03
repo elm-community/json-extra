@@ -296,6 +296,7 @@ indexedList indexedDecoder =
 
     decodeString keys "{ \"alice\": 42, \"bob\": 99 }"
         == [ "alice", "bob" ]
+    --> True
 
 -}
 keys : Decoder (List String)
