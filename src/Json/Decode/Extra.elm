@@ -9,6 +9,7 @@ module Json.Decode.Extra
         , doubleEncoded
         , fromResult
         , indexedList
+        , keys
         , optionalField
         , parseFloat
         , parseInt
@@ -294,15 +295,15 @@ indexedList indexedDecoder =
 
 {-| Get a list of the keys of a JSON object
 
-    decodeString keys "{ \"alice\": 42, \"bob\": 99 }"
-        == [ "alice", "bob" ]
-    --> True
+    """ { "alice": 42, "bob": 99 } """
+        |> decodeString keys
+    --> Ok [ "alice", "bob" ]
 
 -}
 keys : Decoder (List String)
 keys =
     keyValuePairs (succeed ())
-        |> map (List.map Tuple.first)
+        |> map (List.foldl (\( key, _ ) acc -> key :: acc) [])
 
 
 {-| Transform a result into a decoder
