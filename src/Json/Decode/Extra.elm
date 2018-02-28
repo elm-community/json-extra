@@ -392,7 +392,7 @@ doubleEncoded decoder =
     string |> andThen (fromResult << decodeString decoder)
 
 
-{-| Helps convering a list of decoders into a decoder for a list of that type.
+{-| Helps converting a list of decoders into a decoder for a list of that type.
 
     decoders : List (Decoder String)
     decoders =
