@@ -12,10 +12,12 @@ import Json.Encode exposing (Value, encode, int, null, object)
 
 {-| Encode a Maybe value. If the value is `Nothing` it will be encoded as `null`
 
-    import Json.Encode exposing (int, null, encode)
+    import Json.Encode exposing (..)
+
 
     maybe int (Just 50)
     --> int 50
+
 
     maybe int Nothing
     --> null
@@ -28,7 +30,9 @@ maybe encoder =
 
 {-| Turn a `Dict` into a JSON object.
 
+    import Json.Encode exposing (..)
     import Dict
+
 
     Dict.fromList [ ( "Sue", 38 ), ( "Tom", 42 ) ]
         |> dict identity int
