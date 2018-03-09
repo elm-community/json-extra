@@ -15,17 +15,11 @@ module Json.Decode.Extra
         , parseInt
         , sequence
         , set
+        , when
         , withDefault
         )
 
 {-| Convenience functions for working with Json
-
-Examples assume the following imports:
-
-    import Json.Decode exposing (..)
-    import Date
-    import Set
-    import Dict
 
 
 # Date
@@ -36,6 +30,11 @@ Examples assume the following imports:
 # Incremental Decoding
 
 @docs andMap, (|:)
+
+
+# Conditional Decoding
+
+@docs when
 
 
 # List
@@ -100,9 +99,14 @@ for an explanation of how `(|:)` works and how to use it.
 
 {-| Extract a date using [`Date.fromString`](http://package.elm-lang.org/packages/elm-lang/core/latest/Date#fromString)
 
+    import Date
+    import Json.Decode exposing (..)
+
+
     """ "2012-04-23T18:25:43.511Z" """
         |> decodeString date
     --> Date.fromString "2012-04-23T18:25:43.511Z"
+
 
     """ "foo" """
         |> decodeString date
@@ -117,6 +121,10 @@ date =
 
 {-| Extract a set.
 
+    import Json.Decode exposing (..)
+    import Set
+
+
     "[ 1, 1, 5, 2 ]"
         |> decodeString (set int)
     --> Ok <| Set.fromList [ 1, 2, 5 ]
@@ -129,6 +137,10 @@ set decoder =
 
 
 {-| Extract a dict using separate decoders for keys and values.
+
+    import Json.Decode exposing (..)
+    import Dict
+
 
     """ { "1": "foo", "2": "bar" } """
         |> decodeString (dict2 int string)
@@ -162,13 +174,18 @@ decodeDictFromTuples keyDecoder tuples =
 {-| Try running the given decoder; if that fails, then succeed with the given
 fallback value.
 
+    import Json.Decode exposing (..)
+
+
     """ { "children": "oops" } """
         |> decodeString (field "children" (list string) |> withDefault [])
     --> Ok []
 
+
     """ null """
         |> decodeString (field "children" (list string) |> withDefault [])
     --> Ok []
+
 
     """ 30 """
         |> decodeString (int |> withDefault 42)
@@ -191,6 +208,8 @@ if a field is present but malformed, you get a success and Nothing.
 you received malformed data.
 
 Examples:
+
+    import Json.Decode exposing (..)
 
 Let's define a `stuffDecoder` that extracts the `"stuff"` field, if it exists.
 
@@ -245,6 +264,9 @@ of decoders.
 Note that this function, unlike `List.map2`'s behaviour, expects the list of
 decoders to have the same length as the list of values in the JSON.
 
+    import Json.Decode exposing (..)
+
+
     sequence
         [ map Just string
         , succeed Nothing
@@ -273,9 +295,13 @@ sequenceHelp decoders jsonValues =
 
 {-| Get access to the current index while decoding a list element.
 
+    import Json.Decode exposing (..)
+
+
     repeatedStringDecoder : Int -> Decoder String
     repeatedStringDecoder times =
         string |> map (String.repeat times)
+
 
     """ [ "a", "b", "c", "d" ] """
         |> decodeString (indexedList repeatedStringDecoder)
@@ -294,6 +320,9 @@ indexedList indexedDecoder =
 
 
 {-| Get a list of the keys of a JSON object
+
+    import Json.Decode exposing (..)
+
 
     """ { "alice": 42, "bob": 99 } """
         |> decodeString keys
@@ -314,6 +343,9 @@ uses the built-in `Date.fromString` to parse a `String` as a `Date`, and
 then converts the `Result` from that conversion into a decoder which has
 either already succeeded or failed based on the outcome.
 
+    import Json.Decode exposing (..)
+
+
     validateString : String -> Result String String
     validateString input =
         case input of
@@ -322,9 +354,11 @@ either already succeeded or failed based on the outcome.
             _ ->
                 Ok input
 
+
     """ "something" """
         |> decodeString (string |> andThen (fromResult << validateString))
     --> Ok "something"
+
 
     """ "" """
         |> decodeString (string |> andThen (fromResult << validateString))
@@ -343,6 +377,9 @@ fromResult result =
 
 {-| Extract an int using [`String.toInt`](http://package.elm-lang.org/packages/elm-lang/core/latest/String#toInt)
 
+    import Json.Decode exposing (..)
+
+
     """ { "field": "123" } """
         |> decodeString (field "field" parseInt)
     --> Ok 123
@@ -354,6 +391,9 @@ parseInt =
 
 
 {-| Extract a float using [`String.toFloat`](http://package.elm-lang.org/packages/elm-lang/core/latest/String#toFloat)
+
+    import Json.Decode exposing (..)
+
 
     """ { "field": "50.5" } """
         |> decodeString (field "field" parseFloat)
@@ -374,13 +414,18 @@ as a string) this is the function you're looking for. Give it a decoder
 and it will return a new decoder that applies your decoder to a string
 field and yields the result (or fails if your decoder fails).
 
+    import Json.Decode exposing (..)
+
+
     logEntriesDecoder : Decoder (List String)
     logEntriesDecoder =
         doubleEncoded (list string)
 
+
     logsDecoder : Decoder (List String)
     logsDecoder =
         field "logs" logEntriesDecoder
+
 
     """ { "logs": "[\\"log1\\", \\"log2\\"]"} """
         |> decodeString logsDecoder
@@ -394,12 +439,16 @@ doubleEncoded decoder =
 
 {-| Helps converting a list of decoders into a decoder for a list of that type.
 
+    import Json.Decode exposing (..)
+
+
     decoders : List (Decoder String)
     decoders =
         [ field "foo" string
         , field "bar" string
         , field "another" string
         ]
+
 
     """ { "foo": "hello", "another": "!", "bar": "world" } """
         |> decodeString (combine decoders)
@@ -418,6 +467,9 @@ _is not_ a JavaScript Array.
 
 This decoder can come to the rescue.
 
+    import Json.Decode exposing (..)
+
+
     """ { "length": 3, "0": "foo", "1": "bar", "2": "baz" } """
         |> decodeString (collection string)
     --> Ok [ "foo", "bar", "baz" ]
@@ -431,4 +483,82 @@ collection decoder =
                 List.range 0 (length - 1)
                     |> List.map (\index -> field (toString index) decoder)
                     |> combine
+            )
+
+
+{-| Helper for conditionally decoding values based on some discriminator
+that needs to pass a certain check.
+
+    import Json.Decode exposing (..)
+
+
+    is : a -> a -> Bool
+    is a b =
+        a == b
+
+
+    enabledValue : Decoder Int
+    enabledValue =
+      (field "value" int)
+        |> when (field "enabled" bool) (is True)
+
+
+    """ { "enabled": true, "value": 123 } """
+        |> decodeString enabledValue
+    --> Ok 123
+
+
+    """ { "enabled": false, "value": 321 } """
+        |> decodeString enabledValue
+    --> Err "I ran into a `fail` decoder: Check failed with input `False`"
+
+This can also be used to decode union types that are encoded with a discriminator field:
+
+    type Animal = Cat String | Dog String
+
+
+    dog : Decoder Animal
+    dog =
+        map Dog (field "name" string)
+
+
+    cat : Decoder Animal
+    cat =
+        map Cat (field "name" string)
+
+
+    animalType : Decoder String
+    animalType =
+        field "type" string
+
+    animal : Decoder Animal
+    animal =
+        oneOf
+            [ when animalType (is "dog") dog
+            , when animalType (is "cat") cat
+            ]
+
+
+    """
+    [
+      { "type": "dog", "name": "Dawg" },
+      { "type": "cat", "name": "Roxy" }
+    ]
+    """
+        |> decodeString (list animal)
+    --> Ok [ Dog "Dawg", Cat "Roxy" ]
+
+-}
+when : Decoder a -> (a -> Bool) -> Decoder b -> Decoder b
+when checkDecoder check passDecoder =
+    checkDecoder
+        |> andThen
+            (\checkVal ->
+                if check checkVal then
+                    passDecoder
+                else
+                    fail <|
+                        "Check failed with input `"
+                            ++ toString checkVal
+                            ++ "`"
             )
