@@ -531,6 +531,7 @@ This can also be used to decode union types that are encoded with a discriminato
     animalType =
         field "type" string
 
+
     animal : Decoder Animal
     animal =
         oneOf
