@@ -12,11 +12,17 @@ module Json.Decode.Extra
         , keys
         , optionalField
         , parseFloat
+        , trimParseFloat
         , parseInt
+        , trimParseInt
         , sequence
         , set
         , when
         , withDefault
+        , eString
+        , eBool
+        , eInt
+        , eFloat
         )
 
 {-| Convenience functions for working with Json
@@ -64,7 +70,18 @@ module Json.Decode.Extra
 
 # Encoded strings
 
-@docs parseInt, parseFloat, doubleEncoded
+@docs parseInt, trimParseInt, parseFloat, trimParseFloat, doubleEncoded
+
+
+# Type-Coercive Decoders
+
+Decoding values from JSON can be painful already, but it can be even more annoying when the incoming 
+JSON comes in an inconsistent format. These decoders are helpful when you want to “clean-up” values that 
+can be accidentally (or intentionally) casted in JavaScript Land.
+
+*The “e” prefix on each decoder stands for “extra” (which refers to the name of this package)*
+
+@docs eString, eBool, eInt, eFloat
 
 -}
 
@@ -563,3 +580,151 @@ when checkDecoder check passDecoder =
                             ++ toString checkVal
                             ++ "`"
             )
+
+
+
+
+
+{-| Coerce any JSON primitive (string, int, float, bool) into a String.
+
+    import Json.Decode exposing (decodeString, list)
+    import Json.Decode.Extra exposing (eString)
+
+    """ [ "hello", 3, 10.2, true  ] """
+        |> decodeString (list eString) 
+    --> Ok [ "hello", "3", "10.2", "true"]
+-}
+eString: Decoder String
+eString =
+    oneOf 
+        [ string 
+        , int   |> map toString 
+        , float |> map toString 
+        , bool  |> map (\x -> if x then "true" else "false")  
+        ]
+
+{-| Coerce any "bool-like" JSON value into a Bool.
+
+    import Json.Decode exposing (decodeString, list)
+    import Json.Decode.Extra exposing (eBool)
+
+    """ [ true, "true", " TrUe ", 1, 1.0, "1", "1.0", "01", "01.00" ] """
+        |> decodeString (list eBool) 
+    --> Ok [ True, True, True, True, True, True, True, True, True ]
+
+
+    """ [ false, "false", " FALse ", 0, 0.0, "0", "0.0", "00", "00.00" ] """
+        |> decodeString (list eBool)  
+    --> Ok [ False, False, False, False, False, False, False, False, False ]
+-}
+eBool: Decoder Bool 
+eBool =
+    oneOf
+        [ bool 
+        , int  |> andThen (\val ->
+                            case val of
+                                1 -> succeed True
+                                0 -> succeed False
+                                _ -> fail <| "Expecting \"1\" or \"0\" but found: " ++ toString val
+                            )
+
+        , float  |> andThen (\val ->
+                            case val of
+                                1.0 -> succeed True
+                                0.0 -> succeed False
+                                _ -> fail <| "Expecting \"1.0\" or \"0.0\" but found: " ++ toString val
+                            )
+        
+        , string |> andThen(\val ->
+                            case val |> String.trim |>String.toLower of
+                                "true"  -> succeed True
+                                "false" -> succeed False
+                                _ -> fail <| "Expecting string representations of booleans like: \"true\" or \"false\" (case & leading/trailing whitespace doesn't matter) but found: " ++ val
+                            )
+
+        -- This handles ints and floats inside strings like "1" or "1.0"
+        , trimParseFloat |> andThen(\val -> 
+                                if val == 1.0 then 
+                                    succeed True 
+                                else if val == 0.0 then 
+                                    succeed False 
+                                else 
+                                    fail <| "Expecting int/float representations of booleans like: (1, 0) or (1.0, 0.0)  but found: " ++ toString val 
+                            )
+        ]
+
+
+{-| Coerce any "int-like" JSON value into a Int.
+
+    import Json.Decode exposing (decodeString, list)
+    import Json.Decode.Extra exposing (eInt)
+
+    """ [ " 1 ", 2, "3.9", 4.4, "05.000" ] """
+        |> decodeString (list eInt) 
+    --> Ok [1, 2, 3, 4, 5]
+
+
+    """ [ " -1 ", -2, "-3.9", -4.4, "-05.000" ] """
+        |> decodeString (list eInt) 
+    --> Ok [ -1, -2, -3, -4, -5]
+-}
+eInt: Decoder Int 
+eInt = 
+    oneOf
+        [ int                                       -- Try the default decoder first
+        , float |> map truncate                     -- converts 4.6 -> 4
+        , bool  |> map (\b -> if b then 1 else 0)   -- convert true -> 1 and false -> 0
+        , trimParseInt                              -- converts "3" -> 3
+        , trimParseFloat |> map truncate            -- converts "2.8" -> 2
+        ]
+
+
+{-| Coerce any "float-like" JSON value into a Float.
+
+    import Json.Decode exposing (decodeString, list)
+    import Json.Decode.Extra exposing (eFloat)
+
+    """ [ " 1.1 ", 2.9, "3.9", 4.4, "05.000" ] """
+        |> decodeString (list eFloat)   
+    --> Ok [1.1, 2.9, 3.9, 4.4, 5.0]
+
+    """ [ " -1.1 ", -2.9, "-3.9", -4.4, "-05.000" ] """
+        |> decodeString (list eFloat)   
+    --> Ok [ -1.1, -2.9, -3.9, -4.4, -5.0]
+-}
+eFloat: Decoder Float 
+eFloat =
+    oneOf
+        [ float                                          -- Try the default decoder first
+        , int   |> map toFloat                           -- converts ints to floats
+        , bool  |> map (\b -> if b then 1.0 else 0.0)    -- convert true to 1.0 and false to 0.0
+        , trimParseFloat                                 -- converts "1.0" -> 1.0
+        , trimParseInt |> map toFloat                    -- converts "1" -> 1.0
+        ]
+
+
+
+{-| Extract a int by first calling [`String.trim`](http://package.elm-lang.org/packages/elm-lang/core/latest/String#trim)
+    and piping the string to [`String.toInt`](http://package.elm-lang.org/packages/elm-lang/core/latest/String#toInt)
+    
+    import Json.Decode exposing (..)
+    """ { "field": " 123   " } """
+        |> decodeString (field "field" trimParseInt)
+    --> Ok 123
+-}
+trimParseInt : Decoder Int
+trimParseInt =
+    string |> andThen (String.trim >> String.toInt >> fromResult)
+
+
+{-| Extract a float by first calling [`String.trim`](http://package.elm-lang.org/packages/elm-lang/core/latest/String#trim) and piping the string to 
+    [`String.toFloat`](http://package.elm-lang.org/packages/elm-lang/core/latest/String#toFloat)
+
+    import Json.Decode exposing (..)
+    """ { "field": "        50.5 " } """
+        |> decodeString (field "field" trimParseFloat)
+    --> Ok 50.5
+-}
+trimParseFloat : Decoder Float
+trimParseFloat =
+    string |> andThen (String.trim >> String.toFloat >> fromResult)

@@ -1,0 +1,145 @@
+[
+  {
+    "name": "Json.Encode.Extra",
+    "comment": " Convenience functions for turning Elm values into Json values.\n\n@docs dict, maybe\n\n",
+    "aliases": [],
+    "types": [],
+    "values": [
+      {
+        "name": "dict",
+        "comment": " Turn a `Dict` into a JSON object.\n\n    import Json.Encode exposing (..)\n    import Dict\n\n\n    Dict.fromList [ ( \"Sue\", 38 ), ( \"Tom\", 42 ) ]\n        |> dict identity int\n        |> encode 0\n    --> \"\"\"{\"Sue\":38,\"Tom\":42}\"\"\"\n\n",
+        "type": "(comparable -> String) -> (v -> Json.Encode.Value) -> Dict.Dict comparable v -> Json.Encode.Value"
+      },
+      {
+        "name": "maybe",
+        "comment": " Encode a Maybe value. If the value is `Nothing` it will be encoded as `null`\n\n    import Json.Encode exposing (..)\n\n\n    maybe int (Just 50)\n    --> int 50\n\n\n    maybe int Nothing\n    --> null\n\n",
+        "type": "(a -> Json.Encode.Value) -> Maybe.Maybe a -> Json.Encode.Value"
+      }
+    ],
+    "generated-with-elm-version": "0.18.0"
+  },
+  {
+    "name": "Json.Decode.Extra",
+    "comment": " Convenience functions for working with Json\n\n\n# Date\n\n@docs date\n\n\n# Incremental Decoding\n\n@docs andMap, (|:)\n\n\n# Conditional Decoding\n\n@docs when\n\n\n# List\n\n@docs collection, sequence, combine, indexedList, keys\n\n\n# Set\n\n@docs set\n\n\n# Dict\n\n@docs dict2\n\n\n# Maybe\n\n@docs withDefault, optionalField\n\n\n# Result\n\n@docs fromResult\n\n\n# Encoded strings\n\n@docs parseInt, trimParseInt, parseFloat, trimParseFloat, doubleEncoded\n\n\n# Type-Coercive Decoders\n\nDecoding values from JSON can be painful already, but it can be even more annoying when the incoming \nJSON comes in an inconsistent format. These decoders are helpful when you want to “clean-up” values that \ncan be accidentally (or intentionally) casted in JavaScript Land.\n\n*The “e” prefix on each decoder stands for “extra” (which refers to the name of this package)*\n\n@docs eString, eBool, eInt, eFloat\n\n",
+    "aliases": [],
+    "types": [],
+    "values": [
+      {
+        "name": "andMap",
+        "comment": " Can be helpful when decoding large objects incrementally.\n\nSee [the `andMap` docs](https://github.com/elm-community/json-extra/blob/2.0.0/docs/andMap.md)\nfor an explanation of how `andMap` works and how to use it.\n\n",
+        "type": "Json.Decode.Decoder a -> Json.Decode.Decoder (a -> b) -> Json.Decode.Decoder b"
+      },
+      {
+        "name": "collection",
+        "comment": " Some JavaScript structures look like arrays, but aren't really. Examples\ninclude `HTMLCollection`, `NodeList` and everything else that has a `length`\nproperty, has values indexed by an integer key between 0 and `length`, but yet\n_is not_ a JavaScript Array.\n\nThis decoder can come to the rescue.\n\n    import Json.Decode exposing (..)\n\n\n    \"\"\" { \"length\": 3, \"0\": \"foo\", \"1\": \"bar\", \"2\": \"baz\" } \"\"\"\n        |> decodeString (collection string)\n    --> Ok [ \"foo\", \"bar\", \"baz\" ]\n\n",
+        "type": "Json.Decode.Decoder a -> Json.Decode.Decoder (List a)"
+      },
+      {
+        "name": "combine",
+        "comment": " Helps converting a list of decoders into a decoder for a list of that type.\n\n    import Json.Decode exposing (..)\n\n\n    decoders : List (Decoder String)\n    decoders =\n        [ field \"foo\" string\n        , field \"bar\" string\n        , field \"another\" string\n        ]\n\n\n    \"\"\" { \"foo\": \"hello\", \"another\": \"!\", \"bar\": \"world\" } \"\"\"\n        |> decodeString (combine decoders)\n    --> Ok [ \"hello\", \"world\", \"!\" ]\n\n",
+        "type": "List (Json.Decode.Decoder a) -> Json.Decode.Decoder (List a)"
+      },
+      {
+        "name": "date",
+        "comment": " Extract a date using [`Date.fromString`](http://package.elm-lang.org/packages/elm-lang/core/latest/Date#fromString)\n\n    import Date\n    import Json.Decode exposing (..)\n\n\n    \"\"\" \"2012-04-23T18:25:43.511Z\" \"\"\"\n        |> decodeString date\n    --> Date.fromString \"2012-04-23T18:25:43.511Z\"\n\n\n    \"\"\" \"foo\" \"\"\"\n        |> decodeString date\n    --> Err \"I ran into a `fail` decoder: Unable to parse 'foo' as a date. Dates must be in the ISO 8601 format.\"\n\n",
+        "type": "Json.Decode.Decoder Date.Date"
+      },
+      {
+        "name": "dict2",
+        "comment": " Extract a dict using separate decoders for keys and values.\n\n    import Json.Decode exposing (..)\n    import Dict\n\n\n    \"\"\" { \"1\": \"foo\", \"2\": \"bar\" } \"\"\"\n        |> decodeString (dict2 int string)\n    --> Ok <| Dict.fromList [ ( 1, \"foo\" ), ( 2, \"bar\" ) ]\n\n",
+        "type": "Json.Decode.Decoder comparable -> Json.Decode.Decoder v -> Json.Decode.Decoder (Dict.Dict comparable v)"
+      },
+      {
+        "name": "doubleEncoded",
+        "comment": " Extract a JSON-encoded string field\n\n\"Yo dawg, I heard you like JSON...\"\n\nIf someone has put JSON in your JSON (perhaps a JSON log entry, encoded\nas a string) this is the function you're looking for. Give it a decoder\nand it will return a new decoder that applies your decoder to a string\nfield and yields the result (or fails if your decoder fails).\n\n    import Json.Decode exposing (..)\n\n\n    logEntriesDecoder : Decoder (List String)\n    logEntriesDecoder =\n        doubleEncoded (list string)\n\n\n    logsDecoder : Decoder (List String)\n    logsDecoder =\n        field \"logs\" logEntriesDecoder\n\n\n    \"\"\" { \"logs\": \"[\\\\\"log1\\\\\", \\\\\"log2\\\\\"]\"} \"\"\"\n        |> decodeString logsDecoder\n    --> Ok [ \"log1\", \"log2\" ]\n\n",
+        "type": "Json.Decode.Decoder a -> Json.Decode.Decoder a"
+      },
+      {
+        "name": "eBool",
+        "comment": " Coerce any \"bool-like\" JSON value into a Bool.\n\n    import Json.Decode exposing (decodeString, list)\n    import Json.Decode.Extra exposing (eBool)\n\n    \"\"\" [ true, \"true\", \" TrUe \", 1, 1.0, \"1\", \"1.0\", \"01\", \"01.00\" ] \"\"\"\n        |> decodeString (list eBool) \n    --> Ok [ True, True, True, True, True, True, True, True, True ]\n\n\n    \"\"\" [ false, \"false\", \" FALse \", 0, 0.0, \"0\", \"0.0\", \"00\", \"00.00\" ] \"\"\"\n        |> decodeString (list eBool)  \n    --> Ok [ False, False, False, False, False, False, False, False, False ]\n",
+        "type": "Json.Decode.Decoder Bool"
+      },
+      {
+        "name": "eFloat",
+        "comment": " Coerce any \"float-like\" JSON value into a Float.\n\n    import Json.Decode exposing (decodeString, list)\n    import Json.Decode.Extra exposing (eFloat)\n\n    \"\"\" [ \" 1.1 \", 2.9, \"3.9\", 4.4, \"05.000\" ] \"\"\"\n        |> decodeString (list eFloat)   \n    --> Ok [1.1, 2.9, 3.9, 4.4, 5.0]\n\n    \"\"\" [ \" -1.1 \", -2.9, \"-3.9\", -4.4, \"-05.000\" ] \"\"\"\n        |> decodeString (list eFloat)   \n    --> Ok [ -1.1, -2.9, -3.9, -4.4, -5.0]\n",
+        "type": "Json.Decode.Decoder Float"
+      },
+      {
+        "name": "eInt",
+        "comment": " Coerce any \"int-like\" JSON value into a Int.\n\n    import Json.Decode exposing (decodeString, list)\n    import Json.Decode.Extra exposing (eInt)\n\n    \"\"\" [ \" 1 \", 2, \"3.9\", 4.4, \"05.000\" ] \"\"\"\n        |> decodeString (list eInt) \n    --> Ok [1, 2, 3, 4, 5]\n\n\n    \"\"\" [ \" -1 \", -2, \"-3.9\", -4.4, \"-05.000\" ] \"\"\"\n        |> decodeString (list eInt) \n    --> Ok [ -1, -2, -3, -4, -5]\n",
+        "type": "Json.Decode.Decoder Int"
+      },
+      {
+        "name": "eString",
+        "comment": " Coerce any JSON primitive (string, int, float, bool) into a String.\n\n    import Json.Decode exposing (decodeString, list)\n    import Json.Decode.Extra exposing (eString)\n\n    \"\"\" [ \"hello\", 3, 10.2, true  ] \"\"\"\n        |> decodeString (list eString) \n    --> Ok [ \"hello\", \"3\", \"10.2\", \"true\"]\n",
+        "type": "Json.Decode.Decoder String"
+      },
+      {
+        "name": "fromResult",
+        "comment": " Transform a result into a decoder\n\nSometimes it can be useful to use functions that primarily operate on\n`Result` in decoders. An example of this is `Json.Decode.Extra.date`. It\nuses the built-in `Date.fromString` to parse a `String` as a `Date`, and\nthen converts the `Result` from that conversion into a decoder which has\neither already succeeded or failed based on the outcome.\n\n    import Json.Decode exposing (..)\n\n\n    validateString : String -> Result String String\n    validateString input =\n        case input of\n            \"\" ->\n                Err \"Empty string is not allowed\"\n            _ ->\n                Ok input\n\n\n    \"\"\" \"something\" \"\"\"\n        |> decodeString (string |> andThen (fromResult << validateString))\n    --> Ok \"something\"\n\n\n    \"\"\" \"\" \"\"\"\n        |> decodeString (string |> andThen (fromResult << validateString))\n    --> Err \"I ran into a `fail` decoder: Empty string is not allowed\"\n\n",
+        "type": "Result.Result String a -> Json.Decode.Decoder a"
+      },
+      {
+        "name": "indexedList",
+        "comment": " Get access to the current index while decoding a list element.\n\n    import Json.Decode exposing (..)\n\n\n    repeatedStringDecoder : Int -> Decoder String\n    repeatedStringDecoder times =\n        string |> map (String.repeat times)\n\n\n    \"\"\" [ \"a\", \"b\", \"c\", \"d\" ] \"\"\"\n        |> decodeString (indexedList repeatedStringDecoder)\n    --> Ok [ \"\", \"b\", \"cc\", \"ddd\" ]\n\n",
+        "type": "(Int -> Json.Decode.Decoder a) -> Json.Decode.Decoder (List a)"
+      },
+      {
+        "name": "keys",
+        "comment": " Get a list of the keys of a JSON object\n\n    import Json.Decode exposing (..)\n\n\n    \"\"\" { \"alice\": 42, \"bob\": 99 } \"\"\"\n        |> decodeString keys\n    --> Ok [ \"alice\", \"bob\" ]\n\n",
+        "type": "Json.Decode.Decoder (List String)"
+      },
+      {
+        "name": "optionalField",
+        "comment": " If a field is missing, succeed with `Nothing`. If it is present, decode it\nas normal and wrap successes in a `Just`.\n\nWhen decoding with\n[`maybe`](http://package.elm-lang.org/packages/elm-lang/core/latest/Json-Decode#maybe),\nif a field is present but malformed, you get a success and Nothing.\n`optionalField` gives you a failed decoding in that case, so you know\nyou received malformed data.\n\nExamples:\n\n    import Json.Decode exposing (..)\n\nLet's define a `stuffDecoder` that extracts the `\"stuff\"` field, if it exists.\n\n    stuffDecoder : Decoder (Maybe String)\n    stuffDecoder =\n        optionalField \"stuff\" string\n\nIf the \"stuff\" field is missing, decode to Nothing.\n\n    \"\"\" { } \"\"\"\n        |> decodeString stuffDecoder\n    --> Ok Nothing\n\nIf the \"stuff\" field is present but not a String, fail decoding.\n\n    \"\"\" { \"stuff\": [] } \"\"\"\n        |> decodeString stuffDecoder\n    --> Err \"Expecting a String at _.stuff but instead got: []\"\n\nIf the \"stuff\" field is present and valid, decode to Just String.\n\n    \"\"\" { \"stuff\": \"yay!\" } \"\"\"\n        |> decodeString stuffDecoder\n    --> Ok <| Just \"yay!\"\n\n",
+        "type": "String -> Json.Decode.Decoder a -> Json.Decode.Decoder (Maybe.Maybe a)"
+      },
+      {
+        "name": "parseFloat",
+        "comment": " Extract a float using [`String.toFloat`](http://package.elm-lang.org/packages/elm-lang/core/latest/String#toFloat)\n\n    import Json.Decode exposing (..)\n\n\n    \"\"\" { \"field\": \"50.5\" } \"\"\"\n        |> decodeString (field \"field\" parseFloat)\n    --> Ok 50.5\n\n",
+        "type": "Json.Decode.Decoder Float"
+      },
+      {
+        "name": "parseInt",
+        "comment": " Extract an int using [`String.toInt`](http://package.elm-lang.org/packages/elm-lang/core/latest/String#toInt)\n\n    import Json.Decode exposing (..)\n\n\n    \"\"\" { \"field\": \"123\" } \"\"\"\n        |> decodeString (field \"field\" parseInt)\n    --> Ok 123\n\n",
+        "type": "Json.Decode.Decoder Int"
+      },
+      {
+        "name": "sequence",
+        "comment": " This function turns a list of decoders into a decoder that returns a list.\n\nThe returned decoder will zip the list of decoders with a list of values,\nmatching each decoder with exactly one value at the same position. This is most\noften useful in cases when you find yourself needing to dynamically generate a\nlist of decoders based on some data, and decode some other data with this list\nof decoders.\n\nNote that this function, unlike `List.map2`'s behaviour, expects the list of\ndecoders to have the same length as the list of values in the JSON.\n\n    import Json.Decode exposing (..)\n\n\n    sequence\n        [ map Just string\n        , succeed Nothing\n        , map Just string\n        ]\n        |> flip decodeString \"\"\" [ \"pick me\", \"ignore me\", \"and pick me\" ] \"\"\"\n    --> Ok [ Just \"pick me\", Nothing, Just \"and pick me\" ]\n\n",
+        "type": "List (Json.Decode.Decoder a) -> Json.Decode.Decoder (List a)"
+      },
+      {
+        "name": "set",
+        "comment": " Extract a set.\n\n    import Json.Decode exposing (..)\n    import Set\n\n\n    \"[ 1, 1, 5, 2 ]\"\n        |> decodeString (set int)\n    --> Ok <| Set.fromList [ 1, 2, 5 ]\n\n",
+        "type": "Json.Decode.Decoder comparable -> Json.Decode.Decoder (Set.Set comparable)"
+      },
+      {
+        "name": "trimParseFloat",
+        "comment": " Extract a float by first calling [`String.trim`](http://package.elm-lang.org/packages/elm-lang/core/latest/String#trim) and piping the string to \n    [`String.toFloat`](http://package.elm-lang.org/packages/elm-lang/core/latest/String#toFloat)\n\n    import Json.Decode exposing (..)\n    \"\"\" { \"field\": \"        50.5 \" } \"\"\"\n        |> decodeString (field \"field\" trimParseFloat)\n    --> Ok 50.5\n",
+        "type": "Json.Decode.Decoder Float"
+      },
+      {
+        "name": "trimParseInt",
+        "comment": " Extract a int by first calling [`String.trim`](http://package.elm-lang.org/packages/elm-lang/core/latest/String#trim)\n    and piping the string to [`String.toInt`](http://package.elm-lang.org/packages/elm-lang/core/latest/String#toInt)\n    \n    import Json.Decode exposing (..)\n    \"\"\" { \"field\": \" 123   \" } \"\"\"\n        |> decodeString (field \"field\" trimParseInt)\n    --> Ok 123\n",
+        "type": "Json.Decode.Decoder Int"
+      },
+      {
+        "name": "when",
+        "comment": " Helper for conditionally decoding values based on some discriminator\nthat needs to pass a certain check.\n\n    import Json.Decode exposing (..)\n\n\n    is : a -> a -> Bool\n    is a b =\n        a == b\n\n\n    enabledValue : Decoder Int\n    enabledValue =\n      (field \"value\" int)\n        |> when (field \"enabled\" bool) (is True)\n\n\n    \"\"\" { \"enabled\": true, \"value\": 123 } \"\"\"\n        |> decodeString enabledValue\n    --> Ok 123\n\n\n    \"\"\" { \"enabled\": false, \"value\": 321 } \"\"\"\n        |> decodeString enabledValue\n    --> Err \"I ran into a `fail` decoder: Check failed with input `False`\"\n\nThis can also be used to decode union types that are encoded with a discriminator field:\n\n    type Animal = Cat String | Dog String\n\n\n    dog : Decoder Animal\n    dog =\n        map Dog (field \"name\" string)\n\n\n    cat : Decoder Animal\n    cat =\n        map Cat (field \"name\" string)\n\n\n    animalType : Decoder String\n    animalType =\n        field \"type\" string\n\n\n    animal : Decoder Animal\n    animal =\n        oneOf\n            [ when animalType (is \"dog\") dog\n            , when animalType (is \"cat\") cat\n            ]\n\n\n    \"\"\"\n    [\n      { \"type\": \"dog\", \"name\": \"Dawg\" },\n      { \"type\": \"cat\", \"name\": \"Roxy\" }\n    ]\n    \"\"\"\n        |> decodeString (list animal)\n    --> Ok [ Dog \"Dawg\", Cat \"Roxy\" ]\n\n",
+        "type": "Json.Decode.Decoder a -> (a -> Bool) -> Json.Decode.Decoder b -> Json.Decode.Decoder b"
+      },
+      {
+        "name": "withDefault",
+        "comment": " Try running the given decoder; if that fails, then succeed with the given\nfallback value.\n\n    import Json.Decode exposing (..)\n\n\n    \"\"\" { \"children\": \"oops\" } \"\"\"\n        |> decodeString (field \"children\" (list string) |> withDefault [])\n    --> Ok []\n\n\n    \"\"\" null \"\"\"\n        |> decodeString (field \"children\" (list string) |> withDefault [])\n    --> Ok []\n\n\n    \"\"\" 30 \"\"\"\n        |> decodeString (int |> withDefault 42)\n    --> Ok 30\n\n",
+        "type": "a -> Json.Decode.Decoder a -> Json.Decode.Decoder a"
+      },
+      {
+        "name": "|:",
+        "comment": " Infix version of `andMap` that makes for a nice DSL when decoding objects.\n\nSee [the `(|:)` docs](https://github.com/elm-community/json-extra/blob/2.0.0/docs/infixAndMap.md)\nfor an explanation of how `(|:)` works and how to use it.\n\n",
+        "type": "Json.Decode.Decoder (a -> b) -> Json.Decode.Decoder a -> Json.Decode.Decoder b"
+      }
+    ],
+    "generated-with-elm-version": "0.18.0"
+  }
+]
