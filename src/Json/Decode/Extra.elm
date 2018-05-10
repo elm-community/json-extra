@@ -3,7 +3,6 @@ module Json.Decode.Extra
         ( andMap
         , collection
         , combine
-        , date
         , dict2
         , doubleEncoded
         , fromResult
@@ -19,11 +18,6 @@ module Json.Decode.Extra
         )
 
 {-| Convenience functions for working with Json
-
-
-# Date
-
-@docs date
 
 
 # Incremental Decoding
@@ -67,7 +61,6 @@ module Json.Decode.Extra
 
 -}
 
-import Date
 import Dict exposing (Dict)
 import Json.Decode exposing (..)
 import Set exposing (Set)
@@ -83,28 +76,6 @@ for an explanation of how `andMap` works and how to use it.
 andMap : Decoder a -> Decoder (a -> b) -> Decoder b
 andMap =
     map2 (|>)
-
-
-{-| Extract a date using [`Date.fromString`](http://package.elm-lang.org/packages/elm-lang/core/latest/Date#fromString)
-
-    import Date
-    import Json.Decode exposing (..)
-
-
-    """ "2012-04-23T18:25:43.511Z" """
-        |> decodeString date
-    --> Date.fromString "2012-04-23T18:25:43.511Z"
-
-
-    """ "foo" """
-        |> decodeString date
-    --> Err "I ran into a `fail` decoder: Unable to parse 'foo' as a date. Dates must be in the ISO 8601 format."
-
--}
-date : Decoder Date.Date
-date =
-    string
-        |> andThen (Date.fromString >> fromResult)
 
 
 {-| Extract a set.
@@ -327,10 +298,8 @@ keys =
 {-| Transform a result into a decoder
 
 Sometimes it can be useful to use functions that primarily operate on
-`Result` in decoders. An example of this is `Json.Decode.Extra.date`. It
-uses the built-in `Date.fromString` to parse a `String` as a `Date`, and
-then converts the `Result` from that conversion into a decoder which has
-either already succeeded or failed based on the outcome.
+`Result` in decoders. This function converts a `Result` into a decoder
+which has either already succeeded or failed based on its value.
 
     import Json.Decode exposing (..)
 
