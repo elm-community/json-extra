@@ -94,7 +94,7 @@ for an explanation of how `(|:)` works and how to use it.
 -}
 (|:) : Decoder (a -> b) -> Decoder a -> Decoder b
 (|:) =
-    flip andMap
+    \b a -> andMap a b
 
 
 {-| Extract a date using [`Date.fromString`](http://package.elm-lang.org/packages/elm-lang/core/latest/Date#fromString)
@@ -287,6 +287,7 @@ sequenceHelp : List (Decoder a) -> List Value -> Decoder (List a)
 sequenceHelp decoders jsonValues =
     if List.length jsonValues /= List.length decoders then
         fail "Number of decoders does not match number of values"
+
     else
         List.map2 decodeValue decoders jsonValues
             |> List.foldr (Result.map2 (::)) (Ok [])
@@ -557,6 +558,7 @@ when checkDecoder check passDecoder =
             (\checkVal ->
                 if check checkVal then
                     passDecoder
+
                 else
                     fail <|
                         "Check failed with input `"
