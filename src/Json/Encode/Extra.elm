@@ -41,7 +41,7 @@ maybe encoder =
 
 -}
 dict : (comparable -> String) -> (v -> Value) -> Dict comparable v -> Value
-dict toKey toValue dict =
-    Dict.toList dict
+dict toKey toValue dict_ =
+    Dict.toList dict_
         |> List.map (\( key, value ) -> ( toKey key, toValue value ))
         |> object
