@@ -127,7 +127,7 @@ decodeDictFromTuples keyDecoder tuples =
                         |> andThen (Dict.insert key value >> succeed)
 
                 Err error ->
-                    fail error
+                    error |> errorToString |> fail
 
 
 {-| Try running the given decoder; if that fails, then succeed with the given
@@ -323,14 +323,14 @@ which has either already succeeded or failed based on its value.
     --> Err "I ran into a `fail` decoder: Empty string is not allowed"
 
 -}
-fromResult : Result String a -> Decoder a
+fromResult : Result Error a -> Decoder a
 fromResult result =
     case result of
         Ok successValue ->
             succeed successValue
 
-        Err errorMessage ->
-            fail errorMessage
+        Err error ->
+            error |> errorToString |> fail
 
 
 {-| Extract an int using [`String.toInt`](http://package.elm-lang.org/packages/elm-lang/core/latest/String#toInt)
@@ -345,7 +345,12 @@ fromResult result =
 -}
 parseInt : Decoder Int
 parseInt =
-    string |> andThen (String.toInt >> fromResult)
+    string
+        |> andThen
+            (String.toInt
+                >> Maybe.map succeed
+                >> Maybe.withDefault (fail "Could not convert String to Int")
+            )
 
 
 {-| Extract a float using [`String.toFloat`](http://package.elm-lang.org/packages/elm-lang/core/latest/String#toFloat)
@@ -360,7 +365,12 @@ parseInt =
 -}
 parseFloat : Decoder Float
 parseFloat =
-    string |> andThen (String.toFloat >> fromResult)
+    string
+        |> andThen
+            (String.toFloat
+                >> Maybe.map succeed
+                >> Maybe.withDefault (fail "Could not convert String to Float")
+            )
 
 
 {-| Extract a JSON-encoded string field
@@ -439,7 +449,7 @@ collection decoder =
         |> andThen
             (\length ->
                 List.range 0 (length - 1)
-                    |> List.map (\index -> field (toString index) decoder)
+                    |> List.map (\index -> field (String.fromInt index) decoder)
                     |> combine
             )
 
@@ -519,6 +529,6 @@ when checkDecoder check passDecoder =
                 else
                     fail <|
                         "Check failed with input `"
-                            ++ toString checkVal
+                            ++ Debug.toString checkVal
                             ++ "`"
             )
