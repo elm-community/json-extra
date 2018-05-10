@@ -1,7 +1,6 @@
 module Json.Decode.Extra
     exposing
-        ( (|:)
-        , andMap
+        ( andMap
         , collection
         , combine
         , date
@@ -29,7 +28,7 @@ module Json.Decode.Extra
 
 # Incremental Decoding
 
-@docs andMap, (|:)
+@docs andMap
 
 
 # Conditional Decoding
@@ -84,17 +83,6 @@ for an explanation of how `andMap` works and how to use it.
 andMap : Decoder a -> Decoder (a -> b) -> Decoder b
 andMap =
     map2 (|>)
-
-
-{-| Infix version of `andMap` that makes for a nice DSL when decoding objects.
-
-See [the `(|:)` docs](https://github.com/elm-community/json-extra/blob/2.0.0/docs/infixAndMap.md)
-for an explanation of how `(|:)` works and how to use it.
-
--}
-(|:) : Decoder (a -> b) -> Decoder a -> Decoder b
-(|:) =
-    \b a -> andMap a b
 
 
 {-| Extract a date using [`Date.fromString`](http://package.elm-lang.org/packages/elm-lang/core/latest/Date#fromString)

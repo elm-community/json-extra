@@ -58,4 +58,3 @@ userDecoder =
         |> andThen (\f -> map f (field "isAdmin" bool))
 ```
 
-See also: The [docs for `(|:)`](https://github.com/elm-community/json-extra/blob/master/docs/infixAndMap.md)
