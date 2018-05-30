@@ -1,10 +1,8 @@
 module Json.Decode.Extra
     exposing
-        ( (|:)
-        , andMap
+        ( andMap
         , collection
         , combine
-        , date
         , dict2
         , doubleEncoded
         , fromResult
@@ -22,14 +20,9 @@ module Json.Decode.Extra
 {-| Convenience functions for working with Json
 
 
-# Date
-
-@docs date
-
-
 # Incremental Decoding
 
-@docs andMap, (|:)
+@docs andMap
 
 
 # Conditional Decoding
@@ -68,7 +61,6 @@ module Json.Decode.Extra
 
 -}
 
-import Date
 import Dict exposing (Dict)
 import Json.Decode exposing (..)
 import Set exposing (Set)
@@ -84,39 +76,6 @@ for an explanation of how `andMap` works and how to use it.
 andMap : Decoder a -> Decoder (a -> b) -> Decoder b
 andMap =
     map2 (|>)
-
-
-{-| Infix version of `andMap` that makes for a nice DSL when decoding objects.
-
-See [the `(|:)` docs](https://github.com/elm-community/json-extra/blob/2.0.0/docs/infixAndMap.md)
-for an explanation of how `(|:)` works and how to use it.
-
--}
-(|:) : Decoder (a -> b) -> Decoder a -> Decoder b
-(|:) =
-    flip andMap
-
-
-{-| Extract a date using [`Date.fromString`](http://package.elm-lang.org/packages/elm-lang/core/latest/Date#fromString)
-
-    import Date
-    import Json.Decode exposing (..)
-
-
-    """ "2012-04-23T18:25:43.511Z" """
-        |> decodeString date
-    --> Date.fromString "2012-04-23T18:25:43.511Z"
-
-
-    """ "foo" """
-        |> decodeString date
-    --> Err "I ran into a `fail` decoder: Unable to parse 'foo' as a date. Dates must be in the ISO 8601 format."
-
--}
-date : Decoder Date.Date
-date =
-    string
-        |> andThen (Date.fromString >> fromResult)
 
 
 {-| Extract a set.
@@ -168,7 +127,7 @@ decodeDictFromTuples keyDecoder tuples =
                         |> andThen (Dict.insert key value >> succeed)
 
                 Err error ->
-                    fail error
+                    error |> errorToString |> fail
 
 
 {-| Try running the given decoder; if that fails, then succeed with the given
@@ -287,6 +246,7 @@ sequenceHelp : List (Decoder a) -> List Value -> Decoder (List a)
 sequenceHelp decoders jsonValues =
     if List.length jsonValues /= List.length decoders then
         fail "Number of decoders does not match number of values"
+
     else
         List.map2 decodeValue decoders jsonValues
             |> List.foldr (Result.map2 (::)) (Ok [])
@@ -338,10 +298,8 @@ keys =
 {-| Transform a result into a decoder
 
 Sometimes it can be useful to use functions that primarily operate on
-`Result` in decoders. An example of this is `Json.Decode.Extra.date`. It
-uses the built-in `Date.fromString` to parse a `String` as a `Date`, and
-then converts the `Result` from that conversion into a decoder which has
-either already succeeded or failed based on the outcome.
+`Result` in decoders. This function converts a `Result` into a decoder
+which has either already succeeded or failed based on its value.
 
     import Json.Decode exposing (..)
 
@@ -365,14 +323,14 @@ either already succeeded or failed based on the outcome.
     --> Err "I ran into a `fail` decoder: Empty string is not allowed"
 
 -}
-fromResult : Result String a -> Decoder a
+fromResult : Result Error a -> Decoder a
 fromResult result =
     case result of
         Ok successValue ->
             succeed successValue
 
-        Err errorMessage ->
-            fail errorMessage
+        Err error ->
+            error |> errorToString |> fail
 
 
 {-| Extract an int using [`String.toInt`](http://package.elm-lang.org/packages/elm-lang/core/latest/String#toInt)
@@ -387,7 +345,12 @@ fromResult result =
 -}
 parseInt : Decoder Int
 parseInt =
-    string |> andThen (String.toInt >> fromResult)
+    string
+        |> andThen
+            (String.toInt
+                >> Maybe.map succeed
+                >> Maybe.withDefault (fail "Could not convert String to Int")
+            )
 
 
 {-| Extract a float using [`String.toFloat`](http://package.elm-lang.org/packages/elm-lang/core/latest/String#toFloat)
@@ -402,7 +365,12 @@ parseInt =
 -}
 parseFloat : Decoder Float
 parseFloat =
-    string |> andThen (String.toFloat >> fromResult)
+    string
+        |> andThen
+            (String.toFloat
+                >> Maybe.map succeed
+                >> Maybe.withDefault (fail "Could not convert String to Float")
+            )
 
 
 {-| Extract a JSON-encoded string field
@@ -481,7 +449,7 @@ collection decoder =
         |> andThen
             (\length ->
                 List.range 0 (length - 1)
-                    |> List.map (\index -> field (toString index) decoder)
+                    |> List.map (\index -> field (String.fromInt index) decoder)
                     |> combine
             )
 
@@ -557,9 +525,10 @@ when checkDecoder check passDecoder =
             (\checkVal ->
                 if check checkVal then
                     passDecoder
+
                 else
                     fail <|
                         "Check failed with input `"
-                            ++ toString checkVal
+                            ++ Debug.toString checkVal
                             ++ "`"
             )
