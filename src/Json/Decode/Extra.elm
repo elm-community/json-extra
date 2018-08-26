@@ -1,21 +1,13 @@
-module Json.Decode.Extra
-    exposing
-        ( andMap
-        , collection
-        , combine
-        , dict2
-        , doubleEncoded
-        , fromResult
-        , indexedList
-        , keys
-        , optionalField
-        , parseFloat
-        , parseInt
-        , sequence
-        , set
-        , when
-        , withDefault
-        )
+module Json.Decode.Extra exposing
+    ( andMap
+    , when
+    , collection, sequence, combine, indexedList, keys
+    , set
+    , dict2
+    , withDefault, optionalField
+    , fromResult
+    , parseInt, parseFloat, doubleEncoded
+    )
 
 {-| Convenience functions for working with Json
 
@@ -168,6 +160,7 @@ you received malformed data.
 Examples:
 
     import Json.Decode exposing (..)
+    import Json.Encode
 
 Let's define a `stuffDecoder` that extracts the `"stuff"` field, if it exists.
 
@@ -183,9 +176,14 @@ If the "stuff" field is missing, decode to Nothing.
 
 If the "stuff" field is present but not a String, fail decoding.
 
+    expectedError : Error
+    expectedError =
+        Failure "Expecting a STRING" (Json.Encode.list identity [])
+          |> Field "stuff"
+
     """ { "stuff": [] } """
         |> decodeString stuffDecoder
-    --> Err "Expecting a String at _.stuff but instead got: []"
+    --> Err expectedError
 
 If the "stuff" field is present and valid, decode to Just String.
 
@@ -284,7 +282,7 @@ indexedList indexedDecoder =
 keys : Decoder (List String)
 keys =
     keyValuePairs (succeed ())
-        |> map (List.foldl (\( key, _ ) acc -> key :: acc) [])
+        |> map (List.map Tuple.first)
 
 
 {-| Transform a result into a decoder
@@ -293,6 +291,7 @@ Sometimes it can be useful to use functions that primarily operate on
 `Result` in decoders.
 
     import Json.Decode exposing (..)
+    import Json.Encode
 
 
     validateString : String -> Result String String
@@ -311,7 +310,7 @@ Sometimes it can be useful to use functions that primarily operate on
 
     """ "" """
         |> decodeString (string |> andThen (fromResult << validateString))
-    --> Err "I ran into a `fail` decoder: Empty string is not allowed"
+    --> Err (Failure "Empty string is not allowed" (Json.Encode.string ""))
 
 -}
 fromResult : Result String a -> Decoder a
@@ -454,6 +453,7 @@ collection decoder =
 that needs to pass a certain check.
 
     import Json.Decode exposing (..)
+    import Json.Encode
 
 
     is : a -> a -> Bool
@@ -472,9 +472,20 @@ that needs to pass a certain check.
     --> Ok 123
 
 
+    input : Json.Decode.Value
+    input =
+        Json.Encode.object
+            [ ( "enabled", Json.Encode.bool False )
+            , ( "value", Json.Encode.int 321 )
+            ]
+
+    expectedError : Error
+    expectedError =
+       Failure "Check failed with input" input
+
     """ { "enabled": false, "value": 321 } """
         |> decodeString enabledValue
-    --> Err "I ran into a `fail` decoder: Check failed with input `False`"
+    --> Err expectedError
 
 This can also be used to decode union types that are encoded with a discriminator field:
 

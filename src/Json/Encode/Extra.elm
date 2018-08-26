@@ -1,12 +1,11 @@
-module Json.Encode.Extra exposing (dict, maybe)
+module Json.Encode.Extra exposing (maybe)
 
 {-| Convenience functions for turning Elm values into Json values.
 
-@docs dict, maybe
+@docs maybe
 
 -}
 
-import Dict exposing (Dict)
 import Json.Encode exposing (Value, encode, int, null, object)
 
 
@@ -26,22 +25,3 @@ import Json.Encode exposing (Value, encode, int, null, object)
 maybe : (a -> Value) -> Maybe a -> Value
 maybe encoder =
     Maybe.map encoder >> Maybe.withDefault null
-
-
-{-| Turn a `Dict` into a JSON object.
-
-    import Json.Encode exposing (..)
-    import Dict
-
-
-    Dict.fromList [ ( "Sue", 38 ), ( "Tom", 42 ) ]
-        |> dict identity int
-        |> encode 0
-    --> """{"Sue":38,"Tom":42}"""
-
--}
-dict : (comparable -> String) -> (v -> Value) -> Dict comparable v -> Value
-dict toKey toValue =
-    Dict.toList
-        >> List.map (\( key, value ) -> ( toKey key, toValue value ))
-        >> object
