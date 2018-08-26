@@ -1,35 +1,20 @@
-module Json.Decode.Extra
-    exposing
-        ( (|:)
-        , andMap
-        , collection
-        , combine
-        , date
-        , dict2
-        , doubleEncoded
-        , fromResult
-        , indexedList
-        , keys
-        , optionalField
-        , parseFloat
-        , parseInt
-        , sequence
-        , set
-        , when
-        , withDefault
-        )
+module Json.Decode.Extra exposing
+    ( andMap
+    , when
+    , collection, sequence, combine, indexedList, keys
+    , set
+    , dict2
+    , withDefault, optionalField
+    , fromResult
+    , parseInt, parseFloat, doubleEncoded
+    )
 
 {-| Convenience functions for working with Json
 
 
-# Date
-
-@docs date
-
-
 # Incremental Decoding
 
-@docs andMap, (|:)
+@docs andMap
 
 
 # Conditional Decoding
@@ -68,11 +53,9 @@ module Json.Decode.Extra
 
 -}
 
-import Date
 import Dict exposing (Dict)
 import Json.Decode exposing (..)
 import Set exposing (Set)
-import String
 
 
 {-| Can be helpful when decoding large objects incrementally.
@@ -84,39 +67,6 @@ for an explanation of how `andMap` works and how to use it.
 andMap : Decoder a -> Decoder (a -> b) -> Decoder b
 andMap =
     map2 (|>)
-
-
-{-| Infix version of `andMap` that makes for a nice DSL when decoding objects.
-
-See [the `(|:)` docs](https://github.com/elm-community/json-extra/blob/2.0.0/docs/infixAndMap.md)
-for an explanation of how `(|:)` works and how to use it.
-
--}
-(|:) : Decoder (a -> b) -> Decoder a -> Decoder b
-(|:) =
-    flip andMap
-
-
-{-| Extract a date using [`Date.fromString`](http://package.elm-lang.org/packages/elm-lang/core/latest/Date#fromString)
-
-    import Date
-    import Json.Decode exposing (..)
-
-
-    """ "2012-04-23T18:25:43.511Z" """
-        |> decodeString date
-    --> Date.fromString "2012-04-23T18:25:43.511Z"
-
-
-    """ "foo" """
-        |> decodeString date
-    --> Err "I ran into a `fail` decoder: Unable to parse 'foo' as a date. Dates must be in the ISO 8601 format."
-
--}
-date : Decoder Date.Date
-date =
-    string
-        |> andThen (Date.fromString >> fromResult)
 
 
 {-| Extract a set.
@@ -168,7 +118,7 @@ decodeDictFromTuples keyDecoder tuples =
                         |> andThen (Dict.insert key value >> succeed)
 
                 Err error ->
-                    fail error
+                    fail (errorToString error)
 
 
 {-| Try running the given decoder; if that fails, then succeed with the given
@@ -210,6 +160,7 @@ you received malformed data.
 Examples:
 
     import Json.Decode exposing (..)
+    import Json.Encode
 
 Let's define a `stuffDecoder` that extracts the `"stuff"` field, if it exists.
 
@@ -225,9 +176,14 @@ If the "stuff" field is missing, decode to Nothing.
 
 If the "stuff" field is present but not a String, fail decoding.
 
+    expectedError : Error
+    expectedError =
+        Failure "Expecting a STRING" (Json.Encode.list identity [])
+          |> Field "stuff"
+
     """ { "stuff": [] } """
         |> decodeString stuffDecoder
-    --> Err "Expecting a String at _.stuff but instead got: []"
+    --> Err expectedError
 
 If the "stuff" field is present and valid, decode to Just String.
 
@@ -267,30 +223,24 @@ decoders to have the same length as the list of values in the JSON.
     import Json.Decode exposing (..)
 
 
-    sequence
-        [ map Just string
-        , succeed Nothing
-        , map Just string
-        ]
-        |> flip decodeString """ [ "pick me", "ignore me", "and pick me" ] """
+    decoder : Decoder (List (Maybe String))
+    decoder =
+        sequence
+            [ map Just string
+            , succeed Nothing
+            , map Just string
+            ]
+
+
+    decodeString decoder """ [ "pick me", "ignore me", "and pick me" ] """
     --> Ok [ Just "pick me", Nothing, Just "and pick me" ]
 
 -}
 sequence : List (Decoder a) -> Decoder (List a)
 sequence decoders =
-    list value |> andThen (sequenceHelp decoders)
-
-
-{-| Helper function for sequence
--}
-sequenceHelp : List (Decoder a) -> List Value -> Decoder (List a)
-sequenceHelp decoders jsonValues =
-    if List.length jsonValues /= List.length decoders then
-        fail "Number of decoders does not match number of values"
-    else
-        List.map2 decodeValue decoders jsonValues
-            |> List.foldr (Result.map2 (::)) (Ok [])
-            |> fromResult
+    decoders
+        |> List.indexedMap (\idx dec -> index idx dec)
+        |> combine
 
 
 {-| Get access to the current index while decoding a list element.
@@ -332,18 +282,16 @@ indexedList indexedDecoder =
 keys : Decoder (List String)
 keys =
     keyValuePairs (succeed ())
-        |> map (List.foldl (\( key, _ ) acc -> key :: acc) [])
+        |> map (List.map Tuple.first)
 
 
 {-| Transform a result into a decoder
 
 Sometimes it can be useful to use functions that primarily operate on
-`Result` in decoders. An example of this is `Json.Decode.Extra.date`. It
-uses the built-in `Date.fromString` to parse a `String` as a `Date`, and
-then converts the `Result` from that conversion into a decoder which has
-either already succeeded or failed based on the outcome.
+`Result` in decoders.
 
     import Json.Decode exposing (..)
+    import Json.Encode
 
 
     validateString : String -> Result String String
@@ -362,7 +310,7 @@ either already succeeded or failed based on the outcome.
 
     """ "" """
         |> decodeString (string |> andThen (fromResult << validateString))
-    --> Err "I ran into a `fail` decoder: Empty string is not allowed"
+    --> Err (Failure "Empty string is not allowed" (Json.Encode.string ""))
 
 -}
 fromResult : Result String a -> Decoder a
@@ -373,6 +321,16 @@ fromResult result =
 
         Err errorMessage ->
             fail errorMessage
+
+
+fromMaybe : String -> Maybe a -> Decoder a
+fromMaybe error val =
+    case val of
+        Just v ->
+            succeed v
+
+        Nothing ->
+            fail error
 
 
 {-| Extract an int using [`String.toInt`](http://package.elm-lang.org/packages/elm-lang/core/latest/String#toInt)
@@ -387,7 +345,7 @@ fromResult result =
 -}
 parseInt : Decoder Int
 parseInt =
-    string |> andThen (String.toInt >> fromResult)
+    string |> andThen (String.toInt >> fromMaybe "Failed to parse as int")
 
 
 {-| Extract a float using [`String.toFloat`](http://package.elm-lang.org/packages/elm-lang/core/latest/String#toFloat)
@@ -402,7 +360,7 @@ parseInt =
 -}
 parseFloat : Decoder Float
 parseFloat =
-    string |> andThen (String.toFloat >> fromResult)
+    string |> andThen (String.toFloat >> fromMaybe "failed to parse as float")
 
 
 {-| Extract a JSON-encoded string field
@@ -434,7 +392,12 @@ field and yields the result (or fails if your decoder fails).
 -}
 doubleEncoded : Decoder a -> Decoder a
 doubleEncoded decoder =
-    string |> andThen (fromResult << decodeString decoder)
+    string
+        |> andThen
+            (fromResult
+                << Result.mapError errorToString
+                << decodeString decoder
+            )
 
 
 {-| Helps converting a list of decoders into a decoder for a list of that type.
@@ -481,7 +444,7 @@ collection decoder =
         |> andThen
             (\length ->
                 List.range 0 (length - 1)
-                    |> List.map (\index -> field (toString index) decoder)
+                    |> List.map (\index -> field (String.fromInt index) decoder)
                     |> combine
             )
 
@@ -490,6 +453,7 @@ collection decoder =
 that needs to pass a certain check.
 
     import Json.Decode exposing (..)
+    import Json.Encode
 
 
     is : a -> a -> Bool
@@ -508,9 +472,20 @@ that needs to pass a certain check.
     --> Ok 123
 
 
+    input : Json.Decode.Value
+    input =
+        Json.Encode.object
+            [ ( "enabled", Json.Encode.bool False )
+            , ( "value", Json.Encode.int 321 )
+            ]
+
+    expectedError : Error
+    expectedError =
+       Failure "Check failed with input" input
+
     """ { "enabled": false, "value": 321 } """
         |> decodeString enabledValue
-    --> Err "I ran into a `fail` decoder: Check failed with input `False`"
+    --> Err expectedError
 
 This can also be used to decode union types that are encoded with a discriminator field:
 
@@ -552,14 +527,12 @@ This can also be used to decode union types that are encoded with a discriminato
 -}
 when : Decoder a -> (a -> Bool) -> Decoder b -> Decoder b
 when checkDecoder check passDecoder =
-    checkDecoder
-        |> andThen
-            (\checkVal ->
-                if check checkVal then
-                    passDecoder
-                else
-                    fail <|
-                        "Check failed with input `"
-                            ++ toString checkVal
-                            ++ "`"
-            )
+    andThen
+        (\checkVal ->
+            if check checkVal then
+                passDecoder
+
+            else
+                fail "Check failed with input"
+        )
+        checkDecoder
