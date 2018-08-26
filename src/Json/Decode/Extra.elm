@@ -1,5 +1,6 @@
 module Json.Decode.Extra exposing
-    ( andMap
+    ( datetime
+    , andMap
     , when
     , collection, sequence, combine, indexedList, keys
     , set
@@ -10,6 +11,11 @@ module Json.Decode.Extra exposing
     )
 
 {-| Convenience functions for working with Json
+
+
+# Dates
+
+@docs datetime
 
 
 # Incremental Decoding
@@ -54,8 +60,46 @@ module Json.Decode.Extra exposing
 -}
 
 import Dict exposing (Dict)
+import Iso8601
 import Json.Decode exposing (..)
 import Set exposing (Set)
+import Time
+
+
+{-| Decode an ISO-8601 formatted date-time string.
+
+This always returns a `Time.Posix` value, which is naturally always expressed in
+UTC.
+
+    import Json.Decode exposing (..)
+    import Json.Encode
+    import Time
+
+    """ "2018-08-26T09:46:00+02:00" """
+        |> decodeString datetime
+    --> Ok (Time.millisToPosix 1535269560000)
+
+    """ "" """
+      |> decodeString datetime
+    --> Err
+    -->    (Failure
+    -->        "Expecting an ISO-8601 formatted date+time string"
+    -->        (Json.Encode.string "")
+    -->    )
+
+-}
+datetime : Decoder Time.Posix
+datetime =
+    andThen
+        (\dateString ->
+            case Iso8601.toTime dateString of
+                Ok v ->
+                    succeed v
+
+                Err _ ->
+                    fail "Expecting an ISO-8601 formatted date+time string"
+        )
+        string
 
 
 {-| Can be helpful when decoding large objects incrementally.

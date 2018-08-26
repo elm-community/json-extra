@@ -1,3 +1,24 @@
+### 4.0.0
+
+**Removals:**
+- `dict`: `elm/json` already comes with a `dict` encoder
+
+**Additions:**
+- `datetime`: Re-introduce decoding a date+time, to `Posix`
+
+**Changes:**
+- doc tests are re-enabled
+- docs are fixed
+
+### 3.0.0
+
+**Removals**
+- `date`: Initial 0.19 compatibility means (temporarily) removing the `date** decoder
+
+**Other stuff:**
+- Elm 0.19 support!
+- doc tests are disabled for now
+
 ### 2.6.0
 
 **Additions:**
