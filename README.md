@@ -3,7 +3,7 @@
 # json-extra
 
 ```
-elm-package install elm-community/json-extra
+elm install elm-community/json-extra
 ```
 
 Convenience functions for working with JSON. Decoders in this package cover
