@@ -168,7 +168,6 @@ decodeDictFromTuples keyDecoder tuples =
 {-| Succeed only when given an empty JSON object (`{}`).
 
     import Json.Decode exposing (..)
-    import Json.Encode
 
     decodeString emptyObject "{}"
     --> Ok ()
