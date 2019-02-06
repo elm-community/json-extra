@@ -4,7 +4,7 @@ module Json.Decode.Extra exposing
     , when
     , collection, sequence, combine, indexedList, keys
     , set
-    , dict2
+    , dict2, emptyObject
     , withDefault, optionalField
     , fromResult
     , parseInt, parseFloat, doubleEncoded
@@ -40,7 +40,7 @@ module Json.Decode.Extra exposing
 
 # Dict
 
-@docs dict2
+@docs dict2, emptyObject
 
 
 # Maybe
@@ -163,6 +163,30 @@ decodeDictFromTuples keyDecoder tuples =
 
                 Err error ->
                     fail (errorToString error)
+
+
+{-| Succeed only when given an empty JSON object (`{}`).
+
+    import Json.Decode exposing (..)
+
+    decodeString emptyObject "{}"
+    --> Ok ()
+
+Anything else makes the decoder fail.
+
+-}
+emptyObject : Decoder ()
+emptyObject =
+    keyValuePairs (succeed ())
+        |> andThen
+            (\pairs ->
+                case pairs of
+                    [] ->
+                        succeed ()
+
+                    _ ->
+                        fail "Expecting an empty object"
+            )
 
 
 {-| Try running the given decoder; if that fails, then succeed with the given
