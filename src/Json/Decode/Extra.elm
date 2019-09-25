@@ -18,6 +18,7 @@ module Json.Decode.Extra exposing
 
 @docs datetime
 
+
 # URLs
 
 @docs url
@@ -112,8 +113,10 @@ datetime =
 
 This always returns a `Url.Url` value.
 
+    import Json.Decode exposing (..)
+    import Url
 
-    "http://foo.bar/quux"
+    """ "http://foo.bar/quux" """
         |> decodeString url
     --> Ok <| Url.Url Url.Http "foo.bar" Nothing "/quux" Nothing Nothing
 
@@ -122,15 +125,14 @@ url : Decoder Url.Url
 url =
     andThen
         (\urlString ->
-             case Url.fromString urlString of
-                 Just actualUrl ->
-                     succeed actualUrl
+            case Url.fromString urlString of
+                Just actualUrl ->
+                    succeed actualUrl
 
-                 Nothing ->
-                     fail "Expecting a  URL"
+                Nothing ->
+                    fail "Expecting a  URL"
         )
         string
-
 
 
 {-| Can be helpful when decoding large objects incrementally.
