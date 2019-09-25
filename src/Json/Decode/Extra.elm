@@ -1,5 +1,6 @@
 module Json.Decode.Extra exposing
     ( datetime
+    , url
     , andMap
     , when
     , collection, sequence, combine, indexedList, keys
@@ -16,6 +17,10 @@ module Json.Decode.Extra exposing
 # Dates
 
 @docs datetime
+
+# URLs
+
+@docs url
 
 
 # Incremental Decoding
@@ -64,6 +69,7 @@ import Iso8601
 import Json.Decode exposing (..)
 import Set exposing (Set)
 import Time
+import Url
 
 
 {-| Decode an ISO-8601 formatted date-time string.
@@ -100,6 +106,31 @@ datetime =
                     fail "Expecting an ISO-8601 formatted date+time string"
         )
         string
+
+
+{-| Decode a URL
+
+This always returns a `Url.Url` value.
+
+
+    "http://foo.bar/quux"
+        |> decodeString url
+    --> Ok <| Url.Url Url.Http "foo.bar" Nothing "/quux" Nothing Nothing
+
+-}
+url : Decoder Url.Url
+url =
+    andThen
+        (\urlString ->
+             case Url.fromString urlString of
+                 Just actualUrl ->
+                     succeed actualUrl
+
+                 Nothing ->
+                     fail "Expecting a  URL"
+        )
+        string
+
 
 
 {-| Can be helpful when decoding large objects incrementally.
