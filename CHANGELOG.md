@@ -1,3 +1,8 @@
+### 4.1.0
+
+**Additions:**
+- `url`: Decode JSON strings to `elm/url#Url`s
+
 ### 4.0.0
 
 **Removals:**
