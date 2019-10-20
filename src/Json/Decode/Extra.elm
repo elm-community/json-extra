@@ -6,7 +6,7 @@ module Json.Decode.Extra exposing
     , collection, sequence, combine, indexedList, keys
     , set
     , dict2
-    , withDefault, optionalField
+    , withDefault, optionalField, optionalNullableField
     , fromResult
     , parseInt, parseFloat, doubleEncoded
     )
@@ -51,7 +51,7 @@ module Json.Decode.Extra exposing
 
 # Maybe
 
-@docs withDefault, optionalField
+@docs withDefault, optionalField, optionalNullableField
 
 
 # Result
@@ -284,6 +284,48 @@ optionalField fieldName decoder =
     in
     value
         |> andThen finishDecoding
+
+
+{-| A neat combination of `optionalField` and `nullable`.
+
+What this means is that a decoder like `optionalNullableField "foo" string` will
+return `Just "hello"` for `{"foo": "hello"}`, `Nothing` for both `{"foo": null}`
+and `{}`, and an error for malformed input like `{"foo": 123}`.
+
+    import Json.Decode exposing (Decoder, Error(..), decodeString, field, string)
+    import Json.Decode.Extra exposing (optionalNullableField)
+    import Json.Encode
+
+    myDecoder : Decoder (Maybe String)
+    myDecoder =
+        optionalNullableField "foo" string
+
+
+    """ {"foo": "hello"} """
+        |> decodeString myDecoder
+    --> Ok (Just "hello")
+
+
+    """ {"foo": null} """
+        |> decodeString myDecoder
+    --> Ok Nothing
+
+
+    """ {} """
+        |> decodeString myDecoder
+    --> Ok Nothing
+
+
+    """ {"foo": 123} """
+        |> decodeString myDecoder
+        |> Result.mapError (\_ -> "expected error")
+    --> Err "expected error"
+
+-}
+optionalNullableField : String -> Decoder a -> Decoder (Maybe a)
+optionalNullableField fieldName decoder =
+    map (Maybe.andThen identity)
+        (optionalField fieldName (nullable decoder))
 
 
 {-| This function turns a list of decoders into a decoder that returns a list.
