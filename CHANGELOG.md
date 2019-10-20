@@ -1,3 +1,8 @@
+### 4.2.0
+
+**Additions:**
+- `optionalNullableField`: Putting `optionalField` and `nullable` together
+
 ### 4.1.0
 
 **Additions:**

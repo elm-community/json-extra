@@ -3,7 +3,7 @@
     "name": "elm-community/json-extra",
     "summary": "Convenience functions for working with JSON",
     "license": "MIT",
-    "version": "4.1.0",
+    "version": "4.2.0",
     "exposed-modules": [
         "Json.Decode.Extra",
         "Json.Encode.Extra"
