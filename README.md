@@ -15,3 +15,7 @@ working with JSON in Elm.
 Contributions are always welcome. Before opening a PR, it's generally a good
 idea to open an issue first, so we can discuss the use-cases before diving into
 the code.
+
+## Upgrading to Elm 0.19
+
+`date` is now `datetime` and only sucessfully decodes strings in Iso 8601 format.
