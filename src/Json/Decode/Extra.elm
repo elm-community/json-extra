@@ -9,6 +9,7 @@ module Json.Decode.Extra exposing
     , withDefault, optionalField, optionalNullableField
     , fromResult
     , parseInt, parseFloat, doubleEncoded
+    , fromMaybe
     )
 
 {-| Convenience functions for working with Json
