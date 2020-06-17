@@ -6,10 +6,9 @@ module Json.Decode.Extra exposing
     , collection, sequence, combine, indexedList, keys
     , set
     , dict2
-    , withDefault, optionalField, optionalNullableField
+    , withDefault, optionalField, optionalNullableField, fromMaybe
     , fromResult
     , parseInt, parseFloat, doubleEncoded
-    , fromMaybe
     )
 
 {-| Convenience functions for working with Json
@@ -52,7 +51,7 @@ module Json.Decode.Extra exposing
 
 # Maybe
 
-@docs withDefault, optionalField, optionalNullableField
+@docs withDefault, optionalField, optionalNullableField, fromMaybe
 
 
 # Result
@@ -405,6 +404,50 @@ keys =
         |> map (List.map Tuple.first)
 
 
+{-| Transform a `Maybe a` into a `Decoder a`
+
+Sometimes, you'll have a function that produces a `Maybe a` value, that you may
+want to use in a decoder.
+
+Let's say, for example, that we have a function to extract the first letter of a
+string, and we want to use that in a decoder so we can extract only the first
+letter of that string.
+
+    import Json.Decode exposing (..)
+    import Json.Encode
+
+
+    firstLetter : String -> Maybe Char
+    firstLetter input =
+        Maybe.map Tuple.first (String.uncons input)
+
+
+    firstLetterDecoder : Decoder Char
+    firstLetterDecoder =
+        andThen
+            (fromMaybe "Empty string not allowed" << firstLetter)
+            string
+
+    """ "something" """
+        |> decodeString firstLetterDecoder
+    --> Ok 's'
+
+
+    """ "" """
+        |> decodeString firstLetterDecoder
+    --> Err (Failure "Empty string not allowed" (Json.Encode.string ""))
+
+-}
+fromMaybe : String -> Maybe a -> Decoder a
+fromMaybe error val =
+    case val of
+        Just v ->
+            succeed v
+
+        Nothing ->
+            fail error
+
+
 {-| Transform a result into a decoder
 
 Sometimes it can be useful to use functions that primarily operate on
@@ -441,16 +484,6 @@ fromResult result =
 
         Err errorMessage ->
             fail errorMessage
-
-
-fromMaybe : String -> Maybe a -> Decoder a
-fromMaybe error val =
-    case val of
-        Just v ->
-            succeed v
-
-        Nothing ->
-            fail error
 
 
 {-| Extract an int using [`String.toInt`](http://package.elm-lang.org/packages/elm-lang/core/latest/String#toInt)
