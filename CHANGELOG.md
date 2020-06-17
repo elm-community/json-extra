@@ -1,3 +1,8 @@
+### 4.3.0
+
+**Additions:**
+- `fromMaybe`: Like `fromResult` but for `Maybe a`
+
 ### 4.2.0
 
 **Additions:**
