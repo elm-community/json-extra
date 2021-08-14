@@ -130,7 +130,7 @@ url =
                     succeed actualUrl
 
                 Nothing ->
-                    fail "Expecting a  URL"
+                    fail "Expecting a URL"
         )
         string
 
